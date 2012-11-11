@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: Apocalypse Meow - Log-in Protection
-Plugin URI: http://www.blobfolio.com
+Plugin Name: Apocalypse Meow
+Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
 Version: 1.0.0
 Author: Josh Stoik
