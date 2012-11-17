@@ -4,7 +4,7 @@ Donate link: http://www.blobfolio.com
 Tags: security, login, password, cats, generator
 Requires at least: 3.4
 Tested up to: 3.4.2
-Stable tag: 1.0.0
+Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -14,10 +14,10 @@ A simple, light-weight collection of tools to help protect wp-admin, including p
 
 Apocalypse Meow provides several tools to help you lock down the wp-admin area:
 
-  * Brute-force log-in protection: temporarily replace the log-in form with a kitty picture after a specified number of failures are detected.
+  * Brute-force log-in protection: temporarily disable and replace the log-in form after a specified number of failures are detected.
   * Specify minimum password requirements for users to ensure nobody chooses something stupid like "password123".  :)
-  * See a complete history of log-in attempts (and successes); optionally downloadable in CSV format.
-  * Disable the generator meta tag.
+  * See a complete history of log-in attempts, successes, and bans; optionally downloadable in CSV format.
+  * Disable the "generator" meta tag, which betrays which version of WordPress you are running (thereby making exploits more easily targetted).
 
 == Installation ==
 
@@ -65,9 +65,15 @@ Of course not!  Haha.  Apocalypse Meow only records the following information wi
 3. Browser (this is self-reported, so take it with a grain of salt)
 4. Status (e.g. success or failure)
 
-= The kitten is stupid.  Can I change the Apocalypse page? =
+= The kitten graphic is stupid and unprofessional.  Can I change the Apocalypse page? =
 
-A customizable Apocalypse screen is planned for a future release.  In the meantime, feel free to edit the plugin manually.
+Yes, you can change both the page title and content via the Settings > Apocalypse Meow page.
+
+= What do the different log-in statuses mean on the Log-in History page? =
+
+* Success: the log-in was successful;
+* Failure: the log-in was a big, fat failure;
+* Apocalypse: the Apocalypse page was displayed instead of the log-in form;
 
 == Screenshots ==
 
@@ -76,9 +82,16 @@ A customizable Apocalypse screen is planned for a future release.  In the meanti
 
 == Changelog ==
 
-= 1.0 =
+= 1.1.0 =
+* Added customizeable page title and content for the Apocalypse page;
+* Added Apocalypse page display logging;
+* Improved timestamp handling;
+* Un-embedded kitten graphic for improved support with older browsers;
+
+= 1.0.0 =
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
 
-N/A
+= 1.1.0 =
+This release provides more accurate timestamp handling and new features.

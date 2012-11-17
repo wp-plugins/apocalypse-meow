@@ -29,7 +29,7 @@ elseif(!current_user_can('manage_options'))
 	#meow-login-history tr.alternate {
 		background-color: #eee;
 	}
-	label[for='view-success'] {
+	label[for='view-success'], label[for='view-failure'] {
 		margin-right: 25px;
 	}
 	#meow-login-history tr.hidden {
@@ -43,21 +43,15 @@ elseif(!current_user_can('manage_options'))
 	<p>Click <a href="<?php echo get_bloginfo('url'); ?>/meow/login_history.csv" title="Download history in CSV format">here</a> to download a CSV dump of this information.</p>
 	<p>FYI: <?php
 	//this is a good place to let them know about the database maintenance setting
-	$meow_clean_database = (bool) get_option('meow_clean_database', false);
-	$meow_data_expiration = (int) get_option('meow_data_expiration', 90);
-		//silently correct bad data
-		if($meow_data_expiration < 3)
-		{
-			$meow_data_expiration = 90;
-			update_option('meow_data_expiration', 90);
-		}
+	$meow_clean_database = meow_get_option('meow_clean_database');
+	$meow_data_expiration = meow_get_option('meow_data_expiration');
 	if($meow_clean_database)
 		echo "Records older than $meow_data_expiration days are automatically purged from the system.";
 	else
 		echo "Log-in data is currently retained forever, which is a long time.  If you find the table below getting a touch unruly, you can have the system automatically purge records after a certain amount of time."
 ?>  Visit the <a href="<?php echo admin_url('options-general.php?page=meow-settings'); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
 
-	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label>
+	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label><label for="view-apocalypse"><input type="checkbox" id="view-apocalypse" data-status="record-apocalypse" checked=checked /> Apocalypse</label>
 
 	<table id="meow-login-history" cellpadding=0 cellspacing=0>
 		<thead>
@@ -82,7 +76,12 @@ elseif(!current_user_can('manage_options'))
 		while($Row = mysql_fetch_assoc($dbResult))
 		{
 			$num++;
-			$status = (intval($Row["success"]) === 1 ? 'success' : 'failure');
+			if(intval($Row["success"]) === 1)
+				$status = 'success';
+			elseif(intval($Row["success"]) === -1)
+				$status = 'apocalypse';
+			else
+				$status = 'failure';
 ?>
 			<tr class="record-<?php echo $status; ?>">
 				<td><?php echo $num; ?></td>

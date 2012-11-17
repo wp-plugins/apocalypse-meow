@@ -46,6 +46,8 @@ if(getenv("REQUEST_METHOD") === 'POST')
 			$meow['meow_fail_window'] = 43200;
 	$meowdata['meow_fail_reset_on_success'] = intval($_POST['meow_fail_reset_on_success']) === 1;
 	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(explode("\n", $_POST['meow_ip_exempt']));
+	$meowdata['meow_apocalypse_title'] = trim(strip_tags($_POST["meow_apocalypse_title"]));
+	$meowdata['meow_apocalypse_content'] = trim($_POST['blurb']);
 	$meowdata['meow_clean_database'] = intval($_POST['meow_clean_database']) === 1;
 	$meowdata['meow_data_expiration'] = (int) $_POST['meow_data_expiration'];
 		//silently correct bad data
@@ -80,42 +82,20 @@ if(getenv("REQUEST_METHOD") === 'POST')
 //Grab saved or default settings
 else
 {
-	$meowdata['meow_protect_login'] = (bool) get_option('meow_protect_login', true);
-	$meowdata['meow_fail_limit'] = (int) get_option('meow_fail_limit', 5);
-		//silently correct bad data
-		if($meowdata['meow_fail_limit'] < 1)
-		{
-			$meow['meow_fail_limit'] = 5;
-			update_option('meow_fail_limit', 5);
-		}
-	$meowdata['meow_fail_window'] = (int) get_option('meow_fail_window', 43200);
-		//silently correct bad data
-		if($meowdata['meow_fail_window'] < 60)
-		{
-			$meow['meow_fail_window'] = 43200;
-			update_option('meow_fail_window', 43200);
-		}
-	$meowdata['meow_fail_reset_on_success'] = (bool) get_option('meow_fail_reset_on_success', true);
-	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(get_option('meow_ip_exempt', array()));
-	$meowdata['meow_clean_database'] = (bool) get_option('meow_clean_database', false);
-	$meowdata['meow_data_expiration'] = (int) get_option('meow_data_expiration', 90);
-		//silently correct bad data
-		if($meowdata['meow_data_expiration'] < 3)
-		{
-			$meowdata['meow_data_expiration'] = 90;
-			update_option('meow_data_expiration', 90);
-		}
-	$meowdata['meow_password_alpha'] = in_array(get_option('meow_password_alpha','optional'), array('optional','required','required-both')) ? get_option('meow_password_alpha','optional') : 'optional';
-	$meowdata['meow_password_numeric'] = in_array(get_option('meow_password_numeric','optional'), array('optional','required')) ? get_option('meow_password_numeric','optional') : 'optional';
-	$meowdata['meow_password_symbol'] = in_array(get_option('meow_password_symbol','optional'), array('optional','required')) ? get_option('meow_password_symbol','optional') : 'optional';
-	$meowdata['meow_password_length'] = (double) get_option('meow_password_length',5);
-		//silently correct bad data
-		if($meowdata['meow_password_length'] < 1)
-		{
-			$meowdata['meow_password_length'] = 5;
-			update_option('meow_password_length', 5);
-		}
-	$meowdata['meow_remove_generator_tag'] = (bool) get_option('meow_remove_generator_tag', true);
+	$meowdata['meow_protect_login'] = meow_get_option('meow_protect_login');
+	$meowdata['meow_fail_limit'] = meow_get_option('meow_fail_limit');
+	$meowdata['meow_fail_window'] = meow_get_option('meow_fail_window');
+	$meowdata['meow_fail_reset_on_success'] = meow_get_option('meow_fail_reset_on_success');
+	$meowdata['meow_ip_exempt'] = meow_get_option('meow_ip_exempt');
+	$meowdata['meow_apocalypse_content'] = meow_get_option('meow_apocalypse_content');
+	$meowdata['meow_apocalypse_title'] = meow_get_option('meow_apocalypse_title');
+	$meowdata['meow_clean_database'] = meow_get_option('meow_clean_database');
+	$meowdata['meow_data_expiration'] = meow_get_option('meow_data_expiration');
+	$meowdata['meow_password_alpha'] = meow_get_option('meow_password_alpha');
+	$meowdata['meow_password_numeric'] = meow_get_option('meow_password_numeric');
+	$meowdata['meow_password_symbol'] = meow_get_option('meow_password_symbol');
+	$meowdata['meow_password_length'] = meow_get_option('meow_password_length');
+	$meowdata['meow_remove_generator_tag'] = meow_get_option('meow_remove_generator_tag');
 }
 
 //--------------------------------------------------
@@ -165,6 +145,13 @@ else
 				<td>
 					<textarea name="meow_ip_exempt" rows="5" cols="50"><?php echo trim(implode("\n", $meowdata['meow_ip_exempt'])); ?></textarea>
 					<p class="description">To avoid accidentally banning yourself, you might consider adding your IP address (<code><?php echo getenv('REMOTE_ADDR'); ?></code>) to the above list.</p>
+				</td>
+			</tr>
+			<tr valign="top">
+				<th scope="row">Apocalypse Meow</th>
+				<td>
+					<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo htmlspecialchars($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
+					<?php echo wp_editor( $meowdata['meow_apocalypse_content'], "blurb", $settings = array('teeny'=>true) ); ?>
 				</td>
 			</tr>
 			<tr valign="top">

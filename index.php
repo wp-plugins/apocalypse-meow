@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.0.0
+Version: 1.1.0
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -29,88 +29,120 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 
 //----------------------------------------------------------------------
-//  Constants/globals
+//  Constants, globals, and variable handling
 //----------------------------------------------------------------------
 
 //the database version
 define('MEOW_DB', '1.0.0');
 
-//the kitten image (embedded so as to spare the server a separate request)
-define('MEOW_IMAGE', 'data:image/gif;base64,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');
+//the kitten image
+define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
 
 //password validation errors
 global $meow_password_error;
 $meow_password_error = false;
+
+//--------------------------------------------------
+//a get_option wrapper that deals with defaults and
+//bad data
+//
+// @since 1.1.0
+//
+// @param $option option_name
+// @return option_value or false
+function meow_get_option($option){
+
+	switch($option)
+	{
+		//is log-in protection enabled?
+		case 'meow_protect_login':
+			return (bool) get_option('meow_protect_login', true);
+		//the maximum number of log-in failures allowed
+		case 'meow_fail_limit':
+			$tmp = (int) get_option('meow_fail_limit', 5);
+			//silently correct bad entries
+			if($tmp < 1)
+			{
+				$tmp = 5;
+				update_option('meow_fail_limit', 5);
+			}
+			return $tmp;
+		//the window in which to look for log-in failures
+		case 'meow_fail_window':
+			$tmp = (int) get_option('meow_fail_window', 43200);
+			if($tmp < 60)
+			{
+				$tmp = 43200;
+				update_option('meow_fail_window', 43200);
+			}
+			return $tmp;
+		//whether or not a successful log-in resets the fail count
+		case 'meow_fail_reset_on_success':
+			return (bool) get_option('meow_fail_reset_on_success', true);
+		//an array of IP addresses to ignore
+		case 'meow_ip_exempt':
+			return meow_sanitize_ips(get_option('meow_ip_exempt', array()));
+		//the apocalypse page title
+		case 'meow_apocalypse_title':
+			return trim(strip_tags(get_option('meow_apocalypse_title', 'Nothing here just meow...')));
+		//the apocalypse page content
+		case 'meow_apocalypse_content':
+			return get_option('meow_apocalypse_content', '<img src="' . MEOW_IMAGE . '" style="width: 64px; height: 64px; border: 0; margin-right: 10px;" align="left" />You have exceeded the maximum number of log-in attempts.<br>Sorry.');
+		//whether or not to remove old log-in entries from the database
+		case 'meow_clean_database':
+			return (bool) get_option('meow_clean_database', false);
+		//how long to keep old log-in entries in the database
+		case 'meow_data_expiration':
+			$tmp = (int) get_option('meow_data_expiration', 90);
+			if($tmp < 3)
+			{
+				$tmp = 90;
+				update_option('meow_data_expiration', 90);
+			}
+			return $tmp;
+		//do passwords require letters?
+		case 'meow_password_alpha':
+			$tmp = get_option('meow_password_alpha','optional');
+			if(!in_array($tmp, array('optional','required','required-both')))
+			{
+				$tmp = 'optional';
+				update_option('meow_password_alpha', 'optional');
+			}
+			return $tmp;
+		//do passwords require numbers?
+		case 'meow_password_numeric':
+			$tmp = get_option('meow_password_numeric', 'optional');
+			if(!in_array($tmp, array('optional','required')))
+			{
+				$tmp = 'optional';
+				update_option('meow_password_numeric', 'optional');
+			}
+			return $tmp;
+		//do passwords require symbols?
+		case 'meow_password_symbol':
+			$tmp = get_option('meow_password_symbol', 'optional');
+			if(!in_array($tmp, array('optional','required')))
+			{
+				$tmp = 'optional';
+				update_option('meow_password_symbol', 'optional');
+			}
+			return $tmp;
+		//minimum password length
+		case 'meow_password_length':
+			$tmp = (int) get_option('meow_password_length', 5);
+			if($tmp < 1)
+			{
+				$tmp = 5;
+				update_option('meow_password_length', 5);
+			}
+			return $tmp;
+		//whether or not to remove the generator tag from <head>
+		case 'meow_remove_generator_tag':
+			return  (bool) get_option('meow_remove_generator_tag', true);
+	}
+
+	return get_option($option, false);
+}
 
 //----------------------------------------------------------------------  end variables
 
@@ -238,9 +270,15 @@ function meow_parse_request( &$wp )
 		{
 			while($Row = mysql_fetch_assoc($dbResult))
 			{
+				if(intval($Row["success"]) === 1)
+					$status = 'success';
+				elseif(intval($Row["success"]) === -1)
+					$status = 'apocalypse';
+				else
+					$status = 'failure';
 				echo "\n\"" . implode('","', array(
 					0 => date("Y-m-d H:i:s", $Row["date"]),
-					1 => (intval($Row["success"]) === 1 ? 'success' : 'failure'),
+					1 => $status,
 					2 => str_replace('"', '\"', $Row["username"]),
 					3 => $Row["ip"],
 					4 => str_replace('"', '\"', $Row["ua"])
@@ -419,31 +457,19 @@ function meow_check_IP(){
 	global $wpdb;
 
 	//if log-in protection is disabled, let's leave without wasting any more time
-	if(1 !== intval(get_option('meow_protect_login', 1)))
+	if(!meow_get_option('meow_protect_login'))
 		return true;
 
 	//ignore the server's IP, and anything defined by the user
-	$ignore = array_merge(array(getenv('SERVER_ADDR')), meow_sanitize_ips(get_option('meow_ip_exempt', array())));
+	$ignore = array_merge(array(getenv('SERVER_ADDR')), meow_get_option('meow_ip_exempt'));
 
 	//further scrutinize only if the IP address is valid
 	if(false !== ($ip = meow_get_IP()) && !in_array($ip, $ignore))
 	{
 		//user settings
-		$meow_fail_limit = (int) get_option('meow_fail_limit', 5);
-			//set invalid entry to default...
-			if($meow_fail_limit < 1)
-			{
-				$meow_fail_limit = 5;
-				update_option('meow_fail_limit', 5);
-			}
-		$meow_fail_window = (int) get_option('meow_fail_window', 43200);
-			//set invalid entry to default...
-			if($meow_fail_window < 60)
-			{
-				$meow_fail_window = 43200;
-				update_option('meow_fail_window', 43200);
-			}
-		$meow_fail_reset_on_success = (bool) get_option('meow_fail_reset_on_success', true);
+		$meow_fail_limit = meow_get_option('meow_fail_limit');
+		$meow_fail_window = meow_get_option('meow_fail_window');
+		$meow_fail_reset_on_success = meow_get_option('meow_fail_reset_on_success');
 
 		//if the fail count resets on success, we'll only look at failures since the last successful log-in (if any)
 		//default is 0, which is fine since all log-in attempts come after the Unix epoch.  :)
@@ -452,8 +478,9 @@ function meow_check_IP(){
 		//if the relevant failures are too great, trigger the apocalypse
 		if($meow_fail_limit <= (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . mysql_real_escape_string($ip) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
 		{
-			//this page will be user-configurable next release
-			echo '<html><head><title>apocalypse meow</title></head><body><img src="' . MEOW_IMAGE . '" style="width: 64px; height: 64px; border: 0; position: absolute; left: 50%; top: 50%; margin-left: -32px; margin-top: -32px;" /><div style="position:absolute; bottom:0; left:0; width: 100%; text-align:center;">You have exceeded the maximum number of log-in attempts.  Sorry.</div></body></html>';
+			//indicate in the logs that the apocalypse screen was shown:
+			meow_login_log(-1, 'n/a');
+			echo '<html><head><title>' . meow_get_option('meow_apocalypse_title') . '</title><link rel="stylesheet" href="' . get_bloginfo('stylesheet_url') . '" /></head><body>' . meow_get_option('meow_apocalypse_content') . '</body></html>';
 			exit;
 		}
 	}
@@ -463,46 +490,49 @@ function meow_check_IP(){
 add_action('login_init','meow_check_IP');
 
 //--------------------------------------------------
-//Log invalid log-in attempts
+//Log log-in attempts and successes
 //
-// @since 1.0.0
+// @since 1.1.0
 //
-// @param n/a
+// @param $status -1 apocalypse; 0 fail; 1 success
+// @param $username
 // @return true
-function meow_log_error(){
+function meow_login_log($status=0, $username=''){
 	global $wpdb;
 
-	//what username did the logee submit?
-	$username = trim(strtolower(stripslashes_deep($_REQUEST["log"])));
+	//get MySQL time (as this may not always be the same as PHP)
+	$time = (int) $wpdb->get_var("SELECT UNIX_TIMESTAMP()");
 
 	//this only works if we have a valid IP
 	if(false !== ($ip = meow_get_IP()))
-		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>getenv("HTTP_USER_AGENT"), "date"=>time(), "success"=>0, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
+		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>getenv("HTTP_USER_AGENT"), "date"=>$time, "success"=>$status, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
 
 	return true;
 }
-add_action('wp_login_failed','meow_log_error');
 
 //--------------------------------------------------
-//Log successful log-ins
+//Wrapper for meow_login_log on failure
 //
-// @since 1.0.0
+// @since 1.1.0
 //
 // @param n/a
 // @return true
-function meow_log_success(){
-	global $wpdb;
-
-	//what username did the logee submit?
-	$username = trim(strtolower(stripslashes_deep($_REQUEST["log"])));
-
-	//this only works if we have a valid IP
-	if(false !== ($ip = meow_get_IP()))
-		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>getenv("HTTP_USER_AGENT"), "date"=>time(), "success"=>1, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
-
-	return true;
+function meow_login_error(){
+	return meow_login_log(0, trim(strtolower(stripslashes_deep($_REQUEST["log"]))));
 }
-add_action('wp_login','meow_log_success');
+add_action('wp_login_failed','meow_login_error');
+
+//--------------------------------------------------
+//Wrapper for meow_login_log on success
+//
+// @since 1.1.0
+//
+// @param n/a
+// @return true
+function meow_login_success(){
+	return meow_login_log(1, trim(strtolower(stripslashes_deep($_REQUEST["log"]))));
+}
+add_action('wp_login', 'meow_login_success');
 
 //--------------------------------------------------
 //Database maintenance
@@ -516,17 +546,15 @@ add_action('wp_login','meow_log_success');
 function meow_clean_database(){
 	global $wpdb;
 
-	$meow_data_expiration = (int) get_option('meow_data_expiration', 90);
-		//silently correct bad data
-		if($meow_data_expiration < 3)
-		{
-			$meow_data_expiration = 90;
-			update_option('meow_data_expiration', 90);
-		}
-
 	//only purge old records if database maintenance is enabled
-	if(1 === intval(get_option('meow_clean_database', false)))
-		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE `date` < " . strtotime("-$meow_data_expiration days"));
+	if(meow_get_option('meow_clean_database'))
+	{
+		//get MySQL time (as this may not always be the same as PHP)
+		$time = (int) $wpdb->get_var("SELECT UNIX_TIMESTAMP()");
+		//clear old entries
+		$meow_data_expiration = meow_get_option('meow_data_expiration');
+		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE `date` < " . strtotime("-$meow_data_expiration days", $time));
+	}
 
 	return true;
 }
@@ -575,40 +603,34 @@ function meow_password_rules(&$pass1, &$pass2)
 		return false;
 
 	//needs a letter
-	if(get_option('meow_password_alpha','optional') === 'required' && !preg_match('/[a-z]/i', $pass1))
+	if(meow_get_option('meow_password_alpha') === 'required' && !preg_match('/[a-z]/i', $pass1))
 	{
 		$meow_password_error = __('The password must contain at least one letter.');
 		return false;
 	}
 	//needs both upper- and lowercase letters
-	elseif(get_option('meow_password_alpha','optional') === 'required-both' && (!preg_match('/[a-z]/', $pass1) || !preg_match('/[A-Z]/', $pass1)))
+	elseif(meow_get_option('meow_password_alpha') === 'required-both' && (!preg_match('/[a-z]/', $pass1) || !preg_match('/[A-Z]/', $pass1)))
 	{
 		$meow_password_error = __('The password must contain at least one uppercase and one lowercase letter.');
 		return false;
 	}
 
 	//needs a number
-	if(get_option('meow_password_numeric', 'optional') === 'required' && !preg_match('/\d/', $pass1))
+	if(meow_get_option('meow_password_numeric') === 'required' && !preg_match('/\d/', $pass1))
 	{
 		$meow_password_error = __('The password must contain at least one number.');
 		return false;
 	}
 
 	//needs a symbol
-	if(get_option('meow_password_symbol', 'optional') === 'required' && !preg_match('/[^a-z0-9]/i', $pass1))
+	if(meow_get_option('meow_password_symbol') === 'required' && !preg_match('/[^a-z0-9]/i', $pass1))
 	{
 		$meow_password_error = __('The password must contain at least one non-alphanumeric symbol.');
 		return false;
 	}
 
 	//check password length
-	$meow_password_length = (double) get_option('meow_password_length',5);
-		//silently correct bad user selection
-		if($meow_password_length < 1)
-		{
-			$meow_password_length = 5;
-			update_option('meow_password_length', 5);
-		}
+	$meow_password_length = meow_get_option('meow_password_length');
 	if(strlen($pass1) < $meow_password_length)
 	{
 		$meow_password_error = __("The password must be at least $meow_password_length characters long.");
@@ -657,7 +679,7 @@ add_action('password_rules_error','meow_password_rules_error', 10, 1);
 // @param n/a
 // @return string (empty)
 function meow_remove_wp_version(){ return ''; }
-if(1 === intval(get_option('meow_remove_generator_tag', 1)))
+if(meow_get_option('meow_remove_generator_tag'))
 	add_filter('the_generator', 'meow_remove_wp_version');
 
 //----------------------------------------------------------------------  end misc security
