@@ -1,7 +1,7 @@
 === Plugin Name ===
 Contributors: blobfolio
 Donate link: http://www.blobfolio.com
-Tags: security, login, password, cats, generator
+Tags: security, login, password, cats, generator, logging, audit, brute-force, history
 Requires at least: 3.4
 Tested up to: 3.4.2
 Stable tag: trunk
