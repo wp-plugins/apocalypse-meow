@@ -1,7 +1,7 @@
 === Plugin Name ===
 Contributors: blobfolio
 Donate link: http://www.blobfolio.com
-Tags: security, login, password, cats, generator, logging, audit, brute-force, history
+Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
 Requires at least: 3.4
 Tested up to: 3.4.2
 Stable tag: trunk
@@ -18,6 +18,7 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
   * Specify minimum password requirements for users to ensure nobody chooses something stupid like "password123".  :)
   * See a complete history of log-in attempts, successes, and bans; optionally downloadable in CSV format.
   * Disable the "generator" meta tag, which betrays which version of WordPress you are running (thereby making exploits more easily targetted).
+  * Prevent the direct execution of PHP scripts in `wp-content/`.
 
 == Installation ==
 
@@ -75,12 +76,20 @@ Yes, you can change both the page title and content via the Settings > Apocalyps
 * Failure: the log-in was a big, fat failure;
 * Apocalypse: the Apocalypse page was displayed instead of the log-in form;
 
+= Wait... how do plugins and themes work if direct PHP execution is disabled?! =
+
+WordPress themes and plugins are made up of PHP scripts that *should* only be executed indirectly through the WordPress engine. Of course, some plugins and themes are poorly coded and do not fully exist within the WP framework and so might break if direct PHP execution is disabled. But hey, if things break, simply disable this option. ;)
+
 == Screenshots ==
 
 1. All options are easily configurable via a settings page.
 2. The handy record of log-in attempts, optionally downloadable as a CSV file.
 
 == Changelog ==
+
+= 1.2.0 =
+* Added the ability to disable the direct execution of PHP scripts in wp-content/
+* Re-organized the settings page
 
 = 1.1.0 =
 * Added customizeable page title and content for the Apocalypse page;
@@ -92,6 +101,9 @@ Yes, you can change both the page title and content via the Settings > Apocalyps
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.2.0 =
+This release adds a new feature and cleans up the settings page, which is getting kinda long.
 
 = 1.1.0 =
 This release provides more accurate timestamp handling and new features.

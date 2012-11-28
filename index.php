@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.1.0
+Version: 1.2.0
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -41,6 +41,12 @@ define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
 //password validation errors
 global $meow_password_error;
 $meow_password_error = false;
+
+//htaccess contents for locked-down wp-content
+define('MEOW_HTACCESS', "<FilesMatch \.(?i:php)$>\nOrder allow,deny\nDeny from all\n</FilesMatch>");
+
+//htaccess filename for locked-down wp-content
+define('MEOW_HTACCESS_FILE', ABSPATH . 'wp-content/.htaccess');
 
 //--------------------------------------------------
 //a get_option wrapper that deals with defaults and
@@ -102,20 +108,20 @@ function meow_get_option($option){
 			return $tmp;
 		//do passwords require letters?
 		case 'meow_password_alpha':
-			$tmp = get_option('meow_password_alpha','optional');
+			$tmp = get_option('meow_password_alpha','required');
 			if(!in_array($tmp, array('optional','required','required-both')))
 			{
-				$tmp = 'optional';
-				update_option('meow_password_alpha', 'optional');
+				$tmp = 'required';
+				update_option('meow_password_alpha', 'required');
 			}
 			return $tmp;
 		//do passwords require numbers?
 		case 'meow_password_numeric':
-			$tmp = get_option('meow_password_numeric', 'optional');
+			$tmp = get_option('meow_password_numeric', 'required');
 			if(!in_array($tmp, array('optional','required')))
 			{
-				$tmp = 'optional';
-				update_option('meow_password_numeric', 'optional');
+				$tmp = 'required';
+				update_option('meow_password_numeric', 'required');
 			}
 			return $tmp;
 		//do passwords require symbols?
@@ -129,11 +135,11 @@ function meow_get_option($option){
 			return $tmp;
 		//minimum password length
 		case 'meow_password_length':
-			$tmp = (int) get_option('meow_password_length', 5);
+			$tmp = (int) get_option('meow_password_length', 10);
 			if($tmp < 1)
 			{
-				$tmp = 5;
-				update_option('meow_password_length', 5);
+				$tmp = 10;
+				update_option('meow_password_length', 10);
 			}
 			return $tmp;
 		//whether or not to remove the generator tag from <head>
@@ -681,5 +687,66 @@ add_action('password_rules_error','meow_password_rules_error', 10, 1);
 function meow_remove_wp_version(){ return ''; }
 if(meow_get_option('meow_remove_generator_tag'))
 	add_filter('the_generator', 'meow_remove_wp_version');
+
+//--------------------------------------------------
+//Determine whether .htaccess exists in wp-content
+//
+// @since 1.2.0
+//
+// @param n/a
+// @return true/false
+function meow_wpcontent_htaccess_exists(){
+	//if the file doesn't exist, return false
+	if(!file_exists(MEOW_HTACCESS_FILE))
+		return false;
+
+	//try to read the file
+	if(false === ($htcontent = @file_get_contents(MEOW_HTACCESS_FILE)))
+		return false;
+
+	//finally, are the contents as expected (give or take some new lines)
+	$htcontent = str_replace("\r\n", "\n", $htcontent);
+	$htcontent = str_replace("\r", "\n", $htcontent);
+	$htcontent = trim($htcontent);
+	return $htcontent === MEOW_HTACCESS;
+}
+
+//--------------------------------------------------
+//Add .htaccess to wp-content
+//
+// @since 1.2.0
+//
+// @param n/a
+// @return true/false status
+function meow_add_wpcontent_htaccess(){
+	//if it already exists, we don't need to be here
+	if(meow_wpcontent_htaccess_exists())
+		return true;
+
+	//try to write it
+	@file_put_contents(MEOW_HTACCESS_FILE, MEOW_HTACCESS);
+
+	//if the write worked, the file should exist, right?
+	return meow_wpcontent_htaccess_exists();
+}
+
+//--------------------------------------------------
+//Remove .htaccess from wp-content
+//
+// @since 1.2.0
+//
+// @param n/a
+// @return true/false status
+function meow_remove_wpcontent_htaccess(){
+	//if the file doesn't exist, we're done
+	if(!meow_wpcontent_htaccess_exists())
+		return true;
+
+	//try to delete it
+	@unlink(MEOW_HTACCESS_FILE);
+
+	//if the unlink worked, the file should be gone, right?
+	return !meow_wpcontent_htaccess_exists();
+}
 
 //----------------------------------------------------------------------  end misc security
