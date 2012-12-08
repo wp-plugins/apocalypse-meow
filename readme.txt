@@ -19,6 +19,7 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
   * See a complete history of log-in attempts, successes, and bans; optionally downloadable in CSV format.
   * Disable the "generator" meta tag, which betrays which version of WordPress you are running (thereby making exploits more easily targetted).
   * Prevent the direct execution of PHP scripts in `wp-content/`.
+  * Rename the default "admin" user.
 
 == Installation ==
 
@@ -87,9 +88,13 @@ WordPress themes and plugins are made up of PHP scripts that *should* only be ex
 
 == Changelog ==
 
+= 1.3.0 =
+* Added the ability to rename the default WordPress user to something less predictable;
+* Minor bug fixes;
+
 = 1.2.0 =
-* Added the ability to disable the direct execution of PHP scripts in wp-content/
-* Re-organized the settings page
+* Added the ability to disable the direct execution of PHP scripts in wp-content/;
+* Re-organized the settings page;
 
 = 1.1.0 =
 * Added customizeable page title and content for the Apocalypse page;
@@ -101,6 +106,9 @@ WordPress themes and plugins are made up of PHP scripts that *should* only be ex
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.0 =
+An additional security feature and minor bug fixes.
 
 = 1.2.0 =
 This release adds a new feature and cleans up the settings page, which is getting kinda long.

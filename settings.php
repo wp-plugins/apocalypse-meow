@@ -23,6 +23,7 @@ elseif(!current_user_can('manage_options'))
 
 //we'll need this later
 $meowdata = array();
+global $wpdb;
 
 
 
@@ -64,34 +65,57 @@ if(getenv("REQUEST_METHOD") === 'POST')
 
 	$meowdata['meow_remove_generator_tag'] = intval($_POST['meow_remove_generator_tag']) === 1;
 
-	//enable wp-content htaccess (only if it doesn't already exist)
-	if(intval($_POST["meow_wpcontent_htaccess"]) === 1 && !meow_wpcontent_htaccess_exists())
-	{
-		if(false === meow_add_wpcontent_htaccess())
-			echo '<div class="error fade"><p>WordPress could not automatically create <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution.  You\'ll have to roll up your sleeves and do it manually. Simply copy the following code into a text file named &quot;.htaccess&quot; and upload it to your wp-content/ directory:</p><p><code>' . nl2br(htmlspecialchars(MEOW_HTACCESS)) . '</code></p></div>';
-		else
-			echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . MEOW_HTACCESS_FILE . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . plugins_url('settings.php', __FILE__) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
-	}
-	//disable wp-content htaccess (only if it presently exists)
-	elseif(intval($_POST["meow_wpcontent_htaccess"]) !== 1 && meow_wpcontent_htaccess_exists())
-	{
-		if(false === meow_remove_wpcontent_htaccess())
-			echo '<div class="error fade"><p>WordPress was unable to delete <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution. Please manually delete this file.</div>';
-		else
-			echo '<div class="updated fade"><p>The rules preventing the direct execution of PHP scripts have been lifted.</p>';
-	}
-
 	//bad nonce, don't save
 	if(!wp_verify_nonce($_POST['_wpnonce'],'meow-settings'))
 		echo '<div class="error fade"><p>Sorry the form had expired.  Please try again.</p></div>';
 	else
 	{
-		//update!
+		//update settings!
+		$changed = 0;
 		foreach($meowdata AS $k=>$v)
-			update_option($k, $v);
+		{
+			if(true === update_option($k, $v))
+				$changed++;
+		}
+		if($changed > 0)
+			echo '<div class="updated fade"><p>Apocalypse Meow\'s settings have been successfully updated.</p></div>';
 
-		//spread the joy
-		echo '<div class="updated fade"><p>The apocalypse has been successfully updated.</p></div>';
+		//enable wp-content htaccess (only if it doesn't already exist)
+		if(intval($_POST["meow_wpcontent_htaccess"]) === 1 && !meow_wpcontent_htaccess_exists())
+		{
+			if(false === meow_add_wpcontent_htaccess())
+				echo '<div class="error fade"><p>WordPress could not automatically create <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution.  You\'ll have to roll up your sleeves and do it manually. Simply copy the following code into a text file named &quot;.htaccess&quot; and upload it to your wp-content/ directory:</p><p><code>' . nl2br(htmlspecialchars(MEOW_HTACCESS)) . '</code></p></div>';
+			else
+				echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . MEOW_HTACCESS_FILE . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . plugins_url('settings.php', __FILE__) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
+		}
+		//disable wp-content htaccess (only if it presently exists)
+		elseif(intval($_POST["meow_wpcontent_htaccess"]) !== 1 && meow_wpcontent_htaccess_exists())
+		{
+			if(false === meow_remove_wpcontent_htaccess())
+				echo '<div class="error fade"><p>WordPress was unable to delete <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution. Please manually delete this file.</div>';
+			else
+				echo '<div class="updated fade"><p>The rules preventing the direct execution of PHP scripts have been lifted.</p>';
+		}
+
+		//are we changing the admin username?
+		if(username_exists('admin') && 'admin' !== ($tmp = trim(strtolower($_POST['meow_admin_user']))))
+		{
+			//new username is already in use
+			if(username_exists($tmp))
+				echo '<div class="error fade"><p>The username &quot;' . htmlspecialchars($tmp) . '&quot; already exists; you\'ll have to come up with something else.</p></div>';
+			//new username is invalidly formatted
+			elseif(!validate_username($tmp))
+				echo '<div class="error fade"><p>The username &quot;' . htmlspecialchars($tmp) . '&quot; is not valid; try again.</p></div>';
+			//let's save it!
+			else
+			{
+				$current_user = wp_get_current_user();
+				echo '<div class="updated fade"><p>Congratulations, the old &quot;admin&quot; user has been successfully changed to &quot;' . htmlspecialchars($tmp) . '&quot;.' . ($current_user->user_login === 'admin' ? ' Unfortunately you were logged in as that now nonexistent user, so you\'ll have to take a moment to <a href="' . admin_url('options-general.php?page=meow-settings') .  '">re-login</a> (as &quot;' . htmlspecialchars($tmp) . '&quot; this time).  :)' : '') . '</p></div>';
+				$wpdb->update($wpdb->users, array('user_login'=>$tmp), array('user_login'=>'admin'), array('%s'), array('%s'));
+				if($current_user->user_login === 'admin')
+					die();
+			}
+		}
 	}
 }
 
@@ -162,6 +186,31 @@ else
 				</div>
 			</div>
 			<!--end wp-content .htaccess-->
+
+			<?php
+			//only show this section if relevant
+			if(username_exists('admin')) {
+			?>
+			<!--start admin user-->
+			<div class="postbox">
+				<h3 class="hndle">Admin who?</h3>
+				<div class="inside">
+					<p>The default WordPress username (&quot;admin&quot;) is in use and should be changed to greatly enhance your login security.  To do this now, type something else below.</p>
+					<p><input type="text" name="meow_admin_user" id="meow_admin_user" value="admin" /></p>
+					<?php
+					//are there any scary stats to pull from this very blog?
+					$attempts_admin = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$wpdb->prefix}meow_log` WHERE `success`=0 AND `username`='admin'");
+					if($attempts_admin > 0)
+					{
+						$attempts_total = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$wpdb->prefix}meow_log` WHERE `success`=0");
+						echo '<p class="description">' . round(100 * $attempts_admin / $attempts_total, 1) . '% of the (failed) attempts to gain access to your blog tried the username &quot;admin&quot;.</p>';
+					}
+					?>
+				</div>
+			</div>
+			<!--end admin user-->
+			<?php } ?>
+
 		</div>
 		<!--end sidebar-->
 

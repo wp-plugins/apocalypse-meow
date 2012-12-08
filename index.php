@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.2.0
+Version: 1.3.0
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -171,6 +171,22 @@ function meow_settings_menu(){
     return true;
 }
 add_action('admin_menu', 'meow_settings_menu');
+
+//--------------------------------------------------
+//Create a plugin page link to the settings too.
+//
+//Not sure why it took so many releases to get
+//around to this...
+//
+// @since 1.3.0
+//
+// @param $links
+// @return $links + settings link
+function meow_plugin_settings_link($links) {
+  $links[] = '<a href="' . admin_url('options-general.php?page=meow-settings') . '">Settings</a>';
+  return $links;
+}
+add_filter("plugin_action_links_" . plugin_basename(__FILE__), 'meow_plugin_settings_link' );
 
 //--------------------------------------------------
 //The Settings->Apocalypse Meow page
