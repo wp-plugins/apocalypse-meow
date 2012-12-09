@@ -2,8 +2,8 @@
 Contributors: blobfolio
 Donate link: http://www.blobfolio.com
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
-Requires at least: 3.4
-Tested up to: 3.4.2
+Requires at least: 3.4.2
+Tested up to: 3.5
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
