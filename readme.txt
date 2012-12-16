@@ -2,7 +2,7 @@
 Contributors: blobfolio
 Donate link: http://www.blobfolio.com
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
-Requires at least: 3.4.2
+Requires at least: 3.4
 Tested up to: 3.5
 Stable tag: trunk
 License: GPLv2 or later
@@ -88,6 +88,10 @@ WordPress themes and plugins are made up of PHP scripts that *should* only be ex
 
 == Changelog ==
 
+= 1.3.1 =
+* Compatibility with 3.5
+* Code clean up: all queries now run through $wpdb
+
 = 1.3.0 =
 * Added the ability to rename the default WordPress user to something less predictable;
 * Minor bug fixes;
@@ -106,6 +110,9 @@ WordPress themes and plugins are made up of PHP scripts that *should* only be ex
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.1 =
+This release contains a bit of code clean up.
 
 = 1.3.0 =
 An additional security feature and minor bug fixes.

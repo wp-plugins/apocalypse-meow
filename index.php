@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.0
+Version: 1.3.1
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -287,10 +287,10 @@ function meow_parse_request( &$wp )
 		echo '"DATE","STATUS","USER","IP","BROWSER"';
 
 		//pull all records from the database
-		$dbResult = mysql_query("SELECT * FROM `{$wpdb->prefix}meow_log` ORDER BY `date` ASC");
-		if(mysql_num_rows($dbResult))
+		$dbResult = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}meow_log` ORDER BY `date` ASC", ARRAY_A);
+		if($wpdb->num_rows > 0)
 		{
-			while($Row = mysql_fetch_assoc($dbResult))
+			foreach($dbResult AS $Row)
 			{
 				if(intval($Row["success"]) === 1)
 					$status = 'success';

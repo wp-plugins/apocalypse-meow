@@ -69,11 +69,11 @@ elseif(!current_user_can('manage_options'))
 	global $wpdb;
 
 	//grab the data, if any
-	$dbResult = mysql_query("SELECT * FROM `{$wpdb->prefix}meow_log` ORDER BY `date` DESC");
-	if(mysql_num_rows($dbResult))
+	$dbResult = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}meow_log` ORDER BY `date` DESC", ARRAY_A);
+	if($wpdb->num_rows)
 	{
 		$num = 0;
-		while($Row = mysql_fetch_assoc($dbResult))
+		foreach($dbResult AS $Row)
 		{
 			$num++;
 			if(intval($Row["success"]) === 1)
