@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.1
+Version: 1.3.2
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -502,6 +502,9 @@ function meow_check_IP(){
 		{
 			//indicate in the logs that the apocalypse screen was shown:
 			meow_login_log(-1, 'n/a');
+			//try to set the 403 status header
+			header((isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);
+			//print the page
 			echo '<html><head><title>' . meow_get_option('meow_apocalypse_title') . '</title><link rel="stylesheet" href="' . get_bloginfo('stylesheet_url') . '" /></head><body>' . meow_get_option('meow_apocalypse_content') . '</body></html>';
 			exit;
 		}

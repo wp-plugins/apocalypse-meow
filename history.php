@@ -21,14 +21,6 @@ elseif(!current_user_can('manage_options'))
 
 ?>
 <style type="text/css">
-	#meow-login-history th, #meow-login-history td {
-		text-align: left;
-		vertical-align: top;
-		padding: 5px 10px 5px 10px;
-	}
-	#meow-login-history tr.alternate {
-		background-color: #eee;
-	}
 	label[for='view-success'], label[for='view-failure'] {
 		margin-right: 25px;
 	}
@@ -53,7 +45,7 @@ elseif(!current_user_can('manage_options'))
 
 	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label><label for="view-apocalypse"><input type="checkbox" id="view-apocalypse" data-status="record-apocalypse" checked=checked /> Apocalypse</label>
 
-	<table id="meow-login-history" cellpadding=0 cellspacing=0>
+	<table id="meow-login-history" class="widefat">
 		<thead>
 			<tr>
 				<th>#</th>
@@ -64,6 +56,16 @@ elseif(!current_user_can('manage_options'))
 				<th>Browser</th>
 			</tr>
 		</thead>
+		<tfoot>
+			<tr>
+				<th>#</th>
+				<th>Date</th>
+				<th>Status</th>
+				<th>Username</th>
+				<th>IP</th>
+				<th>Browser</th>
+			</tr>
+		</tfoot>
 		<tbody>
 <?php
 	global $wpdb;
@@ -104,18 +106,11 @@ elseif(!current_user_can('manage_options'))
 
 <script type="text/javascript">
 
-	function color_rows(){
-		jQuery("#meow-login-history tr.alternate").removeClass('alternate');
-		jQuery("#meow-login-history tr:visible:odd").addClass('alternate');
-	}
-	color_rows();
-
 	jQuery("input[type=checkbox]").click(function(){
 		if(jQuery(this).is(":checked"))
 			jQuery("#meow-login-history tr." + jQuery(this).attr('data-status')).removeClass('hidden');
 		else
 			jQuery("#meow-login-history tr." + jQuery(this).attr('data-status')).addClass('hidden');
-		color_rows();
 	});
 
 </script>

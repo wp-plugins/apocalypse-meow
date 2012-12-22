@@ -81,12 +81,21 @@ Yes, you can change both the page title and content via the Settings > Apocalyps
 
 WordPress themes and plugins are made up of PHP scripts that *should* only be executed indirectly through the WordPress engine. Of course, some plugins and themes are poorly coded and do not fully exist within the WP framework and so might break if direct PHP execution is disabled. But hey, if things break, simply disable this option. ;)
 
+== Fail2ban setup ==
+
+Some robots are so dumb they'll continue trying to submit credentials even after the login form is replaced, wasting system resources and clogging up the log-in history table.  One way to mitigate this is to use a program like Fail2ban to watch for excessive Apocalypseness and ban the culprits via the firewall.  Check your access logs for requests for wp-login.php returning a 403 status code, like:
+> `failregex =  ^<HOST> -.*"(GET|POST).*/wp\-login\.php.*\ 403\ .*$`
+
 == Screenshots ==
 
 1. All options are easily configurable via a settings page.
 2. The handy record of log-in attempts, optionally downloadable as a CSV file.
 
 == Changelog ==
+
+= 1.3.2 =
+* Code clean up: use existing WP CSS for log-in history table
+* Set 403 status header when displaying Apocalypse screen
 
 = 1.3.1 =
 * Compatibility with 3.5
@@ -110,6 +119,9 @@ WordPress themes and plugins are made up of PHP scripts that *should* only be ex
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.2 =
+Minor tweaks and optimizations.
 
 = 1.3.1 =
 This release contains a bit of code clean up.

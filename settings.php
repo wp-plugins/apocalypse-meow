@@ -259,6 +259,7 @@ else
 									<td>
 										<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo htmlspecialchars($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
 										<?php echo wp_editor( $meowdata['meow_apocalypse_content'], "blurb", $settings = array('teeny'=>true) ); ?>
+										<p class="description">Note: Some servers may display a generic <code>403 Forbidden</code> page instead, but further log-in attempts are prevented either way.</p>
 									</td>
 								</tr>
 								<tr valign="top">
