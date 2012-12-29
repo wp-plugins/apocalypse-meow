@@ -30,6 +30,10 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
 
 == Frequently Asked Questions ==
 
+= Is this plugin compatible with WPMU? =
+
+The plugin is only meant to be used with single-site WordPress installations.  Some features may still work under multi-site environments, however it would be safer to use some other plugin that is specifically marked WPMU-compatible instead.
+
 = I have accidentally banned myself, what can I do? =
 
 If you have accidentally banned yourself, you have a few options: A) wait until the defined time has elapsed; B) log-in from a different network IP (like from a friend's house); C) delete the `apocalypse-meow` plugins directory via FTP to force uninstallation of the plugin.
