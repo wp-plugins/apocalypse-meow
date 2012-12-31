@@ -94,16 +94,23 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 1. All options are easily configurable via a settings page.
 2. The handy record of log-in attempts, optionally downloadable as a CSV file.
+3. Pretty log-in statistics!
 
 == Changelog ==
 
+= 1.3.3 =
+* Added log-in statistics;
+* Storing UA string with log-in attempt is now optional (default disabled);
+* Log-in protection settings now hidden if log-in protection is disabled;
+* Database maintenance settings now hidden if maintenance is disabled;
+
 = 1.3.2 =
-* Code clean up: use existing WP CSS for log-in history table
-* Set 403 status header when displaying Apocalypse screen
+* Code clean up: use existing WP CSS for log-in history table;
+* Set 403 status header when displaying Apocalypse screen;
 
 = 1.3.1 =
-* Compatibility with 3.5
-* Code clean up: all queries now run through $wpdb
+* Compatibility with 3.5;
+* Code clean up: all queries now run through $wpdb;
 
 = 1.3.0 =
 * Added the ability to rename the default WordPress user to something less predictable;
@@ -123,6 +130,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.3 =
+Added a stats page and more settings.
 
 = 1.3.2 =
 Minor tweaks and optimizations.

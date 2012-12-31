@@ -45,6 +45,8 @@ if(getenv("REQUEST_METHOD") === 'POST')
 		//silently correct invalid choice
 		if($meowdata['meow_fail_window'] < 60)
 			$meow['meow_fail_window'] = 43200;
+		elseif($meowdata['meow_fail_window'] > 86400)
+			$meow['meow_fail_window'] = 43200;
 	$meowdata['meow_fail_reset_on_success'] = intval($_POST['meow_fail_reset_on_success']) === 1;
 	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(explode("\n", $_POST['meow_ip_exempt']));
 	$meowdata['meow_apocalypse_title'] = trim(strip_tags($_POST["meow_apocalypse_title"]));
@@ -52,8 +54,9 @@ if(getenv("REQUEST_METHOD") === 'POST')
 	$meowdata['meow_clean_database'] = intval($_POST['meow_clean_database']) === 1;
 	$meowdata['meow_data_expiration'] = (int) $_POST['meow_data_expiration'];
 		//silently correct bad data
-		if($meowdata['meow_data_expiration'] < 3)
+		if($meowdata['meow_data_expiration'] < 30)
 			$meowdata['meow_data_expiration'] = 90;
+	$meowdata['meow_store_ua'] = intval($_POST['meow_store_ua']) === 1;
 
 	$meowdata['meow_password_alpha'] = in_array($_POST['meow_password_alpha'], array('optional','required','required-both')) ? $_POST['meow_password_alpha'] : 'optional';
 	$meowdata['meow_password_numeric'] = in_array($_POST['meow_password_numeric'], array('optional','required')) ? $_POST['meow_password_numeric'] : 'optional';
@@ -130,6 +133,7 @@ else
 	$meowdata['meow_ip_exempt'] = meow_get_option('meow_ip_exempt');
 	$meowdata['meow_apocalypse_content'] = meow_get_option('meow_apocalypse_content');
 	$meowdata['meow_apocalypse_title'] = meow_get_option('meow_apocalypse_title');
+	$meowdata['meow_store_ua'] = meow_get_option('meow_store_ua');
 	$meowdata['meow_clean_database'] = meow_get_option('meow_clean_database');
 	$meowdata['meow_data_expiration'] = meow_get_option('meow_data_expiration');
 	$meowdata['meow_password_alpha'] = meow_get_option('meow_password_alpha');
@@ -146,12 +150,14 @@ else
 	.form-table {
 		clear: left!important;
 	}
+	.meow-hidden {
+		display: none;
+	}
 </style>
 
 <div class="wrap">
 
-	<img src="<?php echo MEOW_IMAGE; ?>" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
-	<h2>Apocalypse Meow</h2>
+	<?php echo meow_get_header(); ?>
 
 	<div class="metabox-holder has-right-sidebar">
 
@@ -229,32 +235,32 @@ else
 									<th scope="row">Activate?</th>
 									<td>
 										<label for="meow_protect_login">
-											<input type="checkbox" name="meow_protect_login" id="meow_protect_login" value="1" <?php echo ($meowdata['meow_protect_login'] === true ? 'checked=checked' : ''); ?> /> Enable log-in protection.  If unchecked, the rest of this section is ignored.
+											<input type="checkbox" name="meow_protect_login" id="meow_protect_login" value="1" <?php echo ($meowdata['meow_protect_login'] === true ? 'checked=checked' : ''); ?> /> Enable log-in protection.
 										</label>
 									</td>
 								</tr>
-								<tr valign="top">
+								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Limitations</th>
 									<td>
 										<input type="number" step="1" min="1" id="meow_fail_limit" name="meow_fail_limit" value="<?php echo $meowdata['meow_fail_limit']; ?>" class="small-text" />
 										<label for="meow_fail_limit">The maximum number of failed log-in attempts.</label>
 										<br />
 
-										<input type="number" step="60" min="60" id="meow_fail_window" name="meow_fail_window" value="<?php echo $meowdata['meow_fail_window']; ?>" class="small-text" />
+										<input type="number" step="60" min="60" max="86400" id="meow_fail_window" name="meow_fail_window" value="<?php echo $meowdata['meow_fail_window']; ?>" class="small-text" />
 										<label for="meow_fail_window">The time (in seconds) before a failed log-in attempt expires.</label>
 										<br />
 
 										<label for="meow_fail_reset_on_success"><input type="checkbox" name="meow_fail_reset_on_success" id="meow_fail_reset_on_success" value="1" <?php echo ($meowdata['meow_fail_reset_on_success'] === true ? 'checked=checked' : ''); ?> /> Reset fail count on successful log-in.</label>
 									</td>
 								</tr>
-								<tr valign="top">
+								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Exempt IP(s), one per line</th>
 									<td>
 										<textarea name="meow_ip_exempt" rows="5" cols="50"><?php echo trim(implode("\n", $meowdata['meow_ip_exempt'])); ?></textarea>
 										<p class="description">To avoid accidentally banning yourself, you might consider adding your IP address (<code><?php echo getenv('REMOTE_ADDR'); ?></code>) to the above list.</p>
 									</td>
 								</tr>
-								<tr valign="top">
+								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Apocalypse Meow</th>
 									<td>
 										<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo htmlspecialchars($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
@@ -262,12 +268,19 @@ else
 										<p class="description">Note: Some servers may display a generic <code>403 Forbidden</code> page instead, but further log-in attempts are prevented either way.</p>
 									</td>
 								</tr>
-								<tr valign="top">
+								<tr valign="top" class="meow-protect-login-only">
+									<th scope="row">Data settings</th>
+									<td>
+										<p><label for="meow_store_ua"><input type="checkbox" name="meow_store_ua" id="meow_store_ua" value="1" <?php echo ($meowdata['meow_store_ua'] === true ? 'checked=checked' : ''); ?> /> Check this box to save the &quot;user agent&quot; information <a href="#" id="show-ua-info">[?]</a> for each log-in attempt.</label></p>
+										<p class="description">This information is easily forged and won't always be accurate, so if you don't find it all that interesting, uncheck the box to save the disk space.  :)</p>
+									</td>
+								</tr>
+								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Database maintenance</th>
 									<td>
 										<p><label for="meow_clean_database"><input type="checkbox" name="meow_clean_database" id="meow_clean_database" value="1" <?php echo ($meowdata['meow_clean_database'] === true ? 'checked=checked' : ''); ?> /> Check this box to enable database maintenance.</label></p>
-										<p>Automatically purge log-in data older than <input type="number" step="1" min="3" id="meow_data_expiration" name="meow_data_expiration" value="<?php echo $meowdata['meow_data_expiration']; ?>" class="small-text" /> days.</p>
-										<p class="description">Note: the maintenance routines are run after a successful log-in, so data might stick around longer than expected if you aren't frequently logging in.</p>
+										<p class="meow-clean-database-only">Automatically purge log-in data older than <input type="number" step="10" min="30" id="meow_data_expiration" name="meow_data_expiration" value="<?php echo $meowdata['meow_data_expiration']; ?>" class="small-text" /> days.</p>
+										<p class="meow-clean-database-only description">Note: the maintenance routines are run after a successful log-in, so data might stick around longer than expected if you aren't frequently logging in.</p>
 									</td>
 								</tr>
 							</tbody>
@@ -332,3 +345,33 @@ else
 
 	</div><!-- /metabox-holder has-right-sidebar -->
 </div><!-- /wrap -->
+
+<script type="text/javascript">
+
+//show/hide fields based on condition
+function meow_toggle_fields(meow_class, meow_condition){
+	if(meow_condition)
+		jQuery(meow_class + '.meow-hidden').removeClass('meow-hidden');
+	else
+		jQuery(meow_class).not('.meow-hidden').addClass('meow-hidden');
+}
+
+//show/hide login protection options
+jQuery("#meow_protect_login").click(function(){
+	meow_toggle_fields('.meow-protect-login-only', jQuery(this).is(':checked'));
+});
+meow_toggle_fields('.meow-protect-login-only', jQuery('#meow_protect_login').is(':checked'));
+
+//show/hide database maintenance options
+jQuery("#meow_clean_database").click(function(){
+	meow_toggle_fields('.meow-clean-database-only', jQuery(this).is(':checked'));
+});
+meow_toggle_fields('.meow-clean-database-only', jQuery('#meow_clean_database').is(':checked'));
+
+//show the u/a info
+jQuery("#show-ua-info").click(function(e){
+	e.preventDefault();
+	alert("Software used to access your web site will usually identify information about itself, including its vendor, version, operating system, and so on.  Your User Agent is reported as:\n\n<?php echo str_replace('"', '\"', getenv("HTTP_USER_AGENT")); ?>");
+});
+
+</script>

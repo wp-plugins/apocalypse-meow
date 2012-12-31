@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.2
+Version: 1.3.3
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -34,6 +34,9 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 //the database version
 define('MEOW_DB', '1.0.0');
+
+//the program version
+define('MEOW_VERSION', '1.3.3');
 
 //the kitten image
 define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -76,7 +79,7 @@ function meow_get_option($option){
 		//the window in which to look for log-in failures
 		case 'meow_fail_window':
 			$tmp = (int) get_option('meow_fail_window', 43200);
-			if($tmp < 60)
+			if($tmp < 60 || $tmp > 86400)
 			{
 				$tmp = 43200;
 				update_option('meow_fail_window', 43200);
@@ -94,13 +97,16 @@ function meow_get_option($option){
 		//the apocalypse page content
 		case 'meow_apocalypse_content':
 			return get_option('meow_apocalypse_content', '<img src="' . MEOW_IMAGE . '" style="width: 64px; height: 64px; border: 0; margin-right: 10px;" align="left" />You have exceeded the maximum number of log-in attempts.<br>Sorry.');
+		//whether or not to store the UA string
+		case 'meow_store_ua':
+			return (bool) get_option('meow_store_ua', false);
 		//whether or not to remove old log-in entries from the database
 		case 'meow_clean_database':
 			return (bool) get_option('meow_clean_database', false);
 		//how long to keep old log-in entries in the database
 		case 'meow_data_expiration':
 			$tmp = (int) get_option('meow_data_expiration', 90);
-			if($tmp < 3)
+			if($tmp < 30)
 			{
 				$tmp = 90;
 				update_option('meow_data_expiration', 90);
@@ -167,8 +173,8 @@ function meow_get_option($option){
 // @param n/a
 // @return true
 function meow_settings_menu(){
-    add_options_page('Apocalypse Meow', 'Apocalypse Meow', 'manage_options', 'meow-settings', 'meow_settings');
-    return true;
+	add_options_page('Apocalypse Meow', 'Apocalypse Meow', 'manage_options', 'meow-settings', 'meow_settings');
+	return true;
 }
 add_action('admin_menu', 'meow_settings_menu');
 
@@ -210,8 +216,9 @@ function meow_settings(){
 // @param n/a
 // @return true
 function meow_history_menu(){
-    add_users_page('Log-in History', 'Log-in History', 'manage_options', 'meow-history', 'meow_history');
-    return true;
+	$page = add_users_page('Log-in History', 'Log-in History', 'manage_options', 'meow-history', 'meow_history');
+	add_action('admin_print_scripts-' . $page, 'meow_enqueue_js_tablesorter');
+	return true;
 }
 add_action('admin_menu', 'meow_history_menu');
 
@@ -226,6 +233,34 @@ add_action('admin_menu', 'meow_history_menu');
 // @return true
 function meow_history(){
 	require_once(dirname(__FILE__) . '/history.php');
+	return true;
+}
+
+//--------------------------------------------------
+//Create a Users->Log-in Statistics menu item
+//
+// @since 1.0.0
+//
+// @param n/a
+// @return true
+function meow_statistics_menu(){
+	$page = add_submenu_page(null, 'Log-in Statistics', 'Log-in Statistics', 'manage_options', 'meow-statistics', 'meow_statistics');
+	add_action('admin_print_scripts-' . $page, 'meow_enqueue_js_flot');
+	return true;
+}
+add_action('admin_menu', 'meow_statistics_menu');
+
+//--------------------------------------------------
+//The Users->Log-in Statistics page
+//
+// this is an external file (statistics.php)
+//
+// @since 1.0.0
+//
+// @param n/a
+// @return true
+function meow_statistics(){
+	require_once(dirname(__FILE__) . '/statistics.php');
 	return true;
 }
 
@@ -253,8 +288,8 @@ add_action('init','meow_init');
 // @return $query_vars
 function meow_query_vars( $query_vars )
 {
-    $query_vars[] = 'meow_history';
-    return $query_vars;
+	$query_vars[] = 'meow_history';
+	return $query_vars;
 }
 add_action('query_vars','meow_query_vars' );
 
@@ -267,11 +302,11 @@ add_action('query_vars','meow_query_vars' );
 // @return true or n/a
 function meow_parse_request( &$wp )
 {
-    //create a CSV dump of log-in history
-    if(array_key_exists('meow_history',$wp->query_vars))
-    {
-    	//this requires permission
-    	if(!current_user_can('manage_options'))
+	//create a CSV dump of log-in history
+	if(array_key_exists('meow_history',$wp->query_vars))
+	{
+		//this requires permission
+		if(!current_user_can('manage_options'))
 			wp_die(__('You do not have sufficient permissions to access this file.'));
 
 		global $wpdb;
@@ -311,10 +346,10 @@ function meow_parse_request( &$wp )
 		//send the buffer contents out into the world!
 		echo ob_get_clean();
 
-        exit();
-    }
+		exit();
+	}
 
-    return true;
+	return true;
 }
 add_action('parse_request','meow_parse_request' );
 
@@ -345,6 +380,86 @@ function meow_deactivate(){
 	return true;
 }
 register_deactivation_hook( __FILE__, 'meow_deactivate');
+
+//--------------------------------------------------
+//Register jquery.tablesorter.min.js for login history
+//
+// @since 1.3.3
+//
+// @param n/a
+// @return true
+function meow_register_js_tablesorter(){
+	wp_register_script('meow_js_tablesorter', plugins_url('jquery.tablesorter.min.js', __FILE__),  array('jquery'), MEOW_VERSION);
+	return true;
+}
+add_action('admin_init','meow_register_js_tablesorter');
+
+//--------------------------------------------------
+//Enqueue jquery.tablesorter.min.js for login history
+//
+// @since 1.3.3
+//
+// @param n/a
+// @return true
+function meow_enqueue_js_tablesorter(){
+	wp_enqueue_script('meow_js_tablesorter');
+	return true;
+}
+
+//--------------------------------------------------
+//Register jquery.flot.min.js for login statistics
+//
+// @since 1.3.3
+//
+// @param n/a
+// @return true
+function meow_register_js_flot(){
+	wp_register_script('meow_js_flot', plugins_url('jquery.flot.min.js', __FILE__),  array('jquery'), MEOW_VERSION);
+	wp_register_script('meow_js_flot_resize', plugins_url('jquery.flot.resize.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
+	wp_register_script('meow_js_flot_navigate', plugins_url('jquery.flot.navigate.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
+	wp_register_script('meow_js_flot_pie', plugins_url('jquery.flot.pie.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
+	return true;
+}
+add_action('admin_init','meow_register_js_flot');
+
+//--------------------------------------------------
+//Enqueue jquery.flot.min.js for login statistics
+//
+// @since 1.3.3
+//
+// @param n/a
+// @return true
+function meow_enqueue_js_flot(){
+	wp_enqueue_script('meow_js_flot');
+	wp_enqueue_script('meow_js_flot_resize');
+	wp_enqueue_script('meow_js_flot_navigate');
+	wp_enqueue_script('meow_js_flot_pie');
+	return true;
+}
+
+//--------------------------------------------------
+//generate HTML header for backend pages
+//
+// @since 1.3.3
+//
+// @param n/a
+// @return html
+function meow_get_header(){
+	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Log-in History'=>'users.php?page=meow-history', 'Statistics'=>'users.php?page=meow-statistics');
+
+	$xout = '<img src="' . MEOW_IMAGE . '" alt="kitten" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
+	<h2>Apocalypse Meow</h2>
+
+	<h3 class="nav-tab-wrapper">
+		&nbsp;';
+
+	foreach($pages AS $title=>$link)
+		$xout .= '<a href="' . admin_url($link) . '" class="nav-tab' . (substr_count(getenv('REQUEST_URI'), $link) ? ' nav-tab-active' : '') . '" title="' . $title . '">' . $title . '</a>';
+
+	$xout .= '</h3>';
+
+	return $xout;
+}
 
 //----------------------------------------------------------------------  end WP backend stuff
 
@@ -405,10 +520,10 @@ register_activation_hook(__FILE__,'meow_SQL');
 // @param n/a
 // @return true
 function meow_db_update(){
-    if(get_option('meow_db_version', '0.0.0') !== MEOW_DB)
-        meow_SQL();
+	if(get_option('meow_db_version', '0.0.0') !== MEOW_DB)
+		meow_SQL();
 
-    return true;
+	return true;
 }
 add_action('plugins_loaded', 'meow_db_update');
 
@@ -528,9 +643,12 @@ function meow_login_log($status=0, $username=''){
 	//get MySQL time (as this may not always be the same as PHP)
 	$time = (int) $wpdb->get_var("SELECT UNIX_TIMESTAMP()");
 
+	//storing user agent?
+	$ua = meow_get_option('meow_store_ua') ? getenv("HTTP_USER_AGENT") : '';
+
 	//this only works if we have a valid IP
 	if(false !== ($ip = meow_get_IP()))
-		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>getenv("HTTP_USER_AGENT"), "date"=>$time, "success"=>$status, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
+		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>$ua, "date"=>$time, "success"=>$status, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
 
 	return true;
 }
