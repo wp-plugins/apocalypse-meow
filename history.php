@@ -107,9 +107,9 @@ elseif(!current_user_can('manage_options'))
 				<td class="meow-record-number"></td>
 				<td><?php echo date("Y-m-d H:i:s", $Row["date"]); ?></td>
 				<td><?php echo $status; ?></td>
-				<td><?php echo htmlspecialchars($Row["username"]); ?></td>
-				<td><?php echo $Row["ip"]; ?></td>
-				<td><?php echo htmlspecialchars($Row["ua"]); ?></td>
+				<td><?php echo esc_html($Row["username"]); ?></td>
+				<td><?php echo esc_html($Row["ip"]); ?></td>
+				<td><?php echo esc_html($Row["ua"]); ?></td>
 			</tr>
 <?php
 		}

@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.3
+Version: 1.3.4
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -32,27 +32,40 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 //  Constants, globals, and variable handling
 //----------------------------------------------------------------------
 
-//the database version
-define('MEOW_DB', '1.0.0');
+//--------------------------------------------------
+//Set up some variables
+//
+// @since 1.3.4
+//
+// @param n/a
+// @return true
+function meow_init_variables() {
+	//the database version
+	define('MEOW_DB', '1.0.0');
 
-//the program version
-define('MEOW_VERSION', '1.3.3');
+	//the program version
+	define('MEOW_VERSION', '1.3.4');
 
-//the kitten image
-define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
+	//the kitten image
+	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
 
-//password validation errors
-global $meow_password_error;
-$meow_password_error = false;
+	//password validation errors
+	global $meow_password_error;
+	$meow_password_error = false;
 
-//htaccess contents for locked-down wp-content
-define('MEOW_HTACCESS', "<FilesMatch \.(?i:php)$>\nOrder allow,deny\nDeny from all\n</FilesMatch>");
+	//htaccess contents for locked-down wp-content
+	define('MEOW_HTACCESS', "<FilesMatch \.(?i:php)$>\nOrder allow,deny\nDeny from all\n</FilesMatch>");
 
-//htaccess filename for locked-down wp-content
-define('MEOW_HTACCESS_FILE', ABSPATH . 'wp-content/.htaccess');
+	//htaccess filename for locked-down wp-content
+	define('MEOW_HTACCESS_FILE', ABSPATH . 'wp-content/.htaccess');
+
+	return true;
+}
+add_action('init','meow_init_variables');
+
 
 //--------------------------------------------------
-//a get_option wrapper that deals with defaults and
+//A get_option wrapper that deals with defaults and
 //bad data
 //
 // @since 1.1.0
@@ -96,7 +109,7 @@ function meow_get_option($option){
 			return trim(strip_tags(get_option('meow_apocalypse_title', 'Nothing here just meow...')));
 		//the apocalypse page content
 		case 'meow_apocalypse_content':
-			return get_option('meow_apocalypse_content', '<img src="' . MEOW_IMAGE . '" style="width: 64px; height: 64px; border: 0; margin-right: 10px;" align="left" />You have exceeded the maximum number of log-in attempts.<br>Sorry.');
+			return get_option('meow_apocalypse_content', '<img src="' . esc_url(MEOW_IMAGE) . '" style="width: 64px; height: 64px; border: 0; margin-right: 10px;" align="left" />You have exceeded the maximum number of log-in attempts.<br>Sorry.');
 		//whether or not to store the UA string
 		case 'meow_store_ua':
 			return (bool) get_option('meow_store_ua', false);
@@ -106,7 +119,7 @@ function meow_get_option($option){
 		//how long to keep old log-in entries in the database
 		case 'meow_data_expiration':
 			$tmp = (int) get_option('meow_data_expiration', 90);
-			if($tmp < 30)
+			if($tmp < 10)
 			{
 				$tmp = 90;
 				update_option('meow_data_expiration', 90);
@@ -151,6 +164,9 @@ function meow_get_option($option){
 		//whether or not to remove the generator tag from <head>
 		case 'meow_remove_generator_tag':
 			return  (bool) get_option('meow_remove_generator_tag', true);
+		//are we disabling the theme/plugin editor?
+		case 'meow_disable_editor':
+			return (bool) get_option('meow_disable_editor', false);
 	}
 
 	return get_option($option, false);
@@ -189,7 +205,7 @@ add_action('admin_menu', 'meow_settings_menu');
 // @param $links
 // @return $links + settings link
 function meow_plugin_settings_link($links) {
-  $links[] = '<a href="' . admin_url('options-general.php?page=meow-settings') . '">Settings</a>';
+  $links[] = '<a href="' . esc_url(admin_url('options-general.php?page=meow-settings')) . '">Settings</a>';
   return $links;
 }
 add_filter("plugin_action_links_" . plugin_basename(__FILE__), 'meow_plugin_settings_link' );
@@ -273,11 +289,11 @@ function meow_statistics(){
 //
 // @param n/a
 // @return true
-function meow_init() {
+function meow_init_rewrite() {
 	add_rewrite_rule( '^meow/login_history\.csv$', 'index.php?meow_history=true', 'top' );
 	return true;
 }
-add_action('init','meow_init');
+add_action('init','meow_init_rewrite');
 
 //--------------------------------------------------
 //Whitelist our query_vars
@@ -360,13 +376,13 @@ add_action('parse_request','meow_parse_request' );
 //
 // @param n/a
 // @return true
-function meow_activate(){
-	//meow_init registers the rewrite rule(s)
-	meow_init();
+function meow_activate_permalink(){
+	//meow_init_rewrite registers the rewrite rule(s)
+	meow_init_rewrite();
 	flush_rewrite_rules();
 	return true;
 }
-register_activation_hook(__FILE__, 'meow_activate');
+register_activation_hook(__FILE__, 'meow_activate_permalink');
 
 //--------------------------------------------------
 //Remove permalink rules on de-activation
@@ -375,11 +391,30 @@ register_activation_hook(__FILE__, 'meow_activate');
 //
 // @param n/a
 // @return true
-function meow_deactivate(){
+function meow_deactivate_permalink(){
 	flush_rewrite_rules();
 	return true;
 }
-register_deactivation_hook( __FILE__, 'meow_deactivate');
+register_deactivation_hook( __FILE__, 'meow_deactivate_permalink');
+
+//--------------------------------------------------
+//Force deactivation if multi-site is enabled
+//
+// @since 1.3.4
+//
+// @param n/a
+// @return true
+function meow_deactivate_multisite(){
+	if(is_multisite())
+	{
+		require_once(ABSPATH . '/wp-admin/includes/plugin.php');
+		deactivate_plugins(__FILE__);
+		echo '<div class="error fade"><p>Apocalypse Meow is not compatible with WPMU and has been disabled. Sorry!</p></div>';
+	}
+
+	return true;
+}
+add_action('admin_init', 'meow_deactivate_multisite');
 
 //--------------------------------------------------
 //Register jquery.tablesorter.min.js for login history
@@ -438,7 +473,7 @@ function meow_enqueue_js_flot(){
 }
 
 //--------------------------------------------------
-//generate HTML header for backend pages
+//Generate HTML header for backend pages
 //
 // @since 1.3.3
 //
@@ -447,19 +482,41 @@ function meow_enqueue_js_flot(){
 function meow_get_header(){
 	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Log-in History'=>'users.php?page=meow-history', 'Statistics'=>'users.php?page=meow-statistics');
 
-	$xout = '<img src="' . MEOW_IMAGE . '" alt="kitten" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
+	$xout = '<img src="' . esc_url(MEOW_IMAGE) . '" alt="kitten" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
 	<h2>Apocalypse Meow</h2>
 
 	<h3 class="nav-tab-wrapper">
 		&nbsp;';
 
 	foreach($pages AS $title=>$link)
-		$xout .= '<a href="' . admin_url($link) . '" class="nav-tab' . (substr_count(getenv('REQUEST_URI'), $link) ? ' nav-tab-active' : '') . '" title="' . $title . '">' . $title . '</a>';
+		$xout .= '<a href="' . esc_url(admin_url($link)) . '" class="nav-tab' . (substr_count($_SERVER['REQUEST_URI'], $link) ? ' nav-tab-active' : '') . '" title="' . $title . '">' . $title . '</a>';
 
 	$xout .= '</h3>';
 
 	return $xout;
 }
+
+//--------------------------------------------------
+//Manually clear log-in data
+//
+// @since 1.3.4
+//
+// @param n/a
+// @return n/a
+function meow_purge_data(){
+	//verify ajax nonce
+	if(check_ajax_referer( 'm30wpurg3', 'nonce', false))
+	{
+		global $wpdb;
+
+		//delete it all!
+		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE 1");
+
+		echo 1;
+	}
+	die();
+}
+add_action('wp_ajax_meow_purge_data', 'meow_purge_data');
 
 //----------------------------------------------------------------------  end WP backend stuff
 
@@ -473,11 +530,11 @@ function meow_get_header(){
 //--------------------------------------------------
 //Create/update a table for log-in logging
 //
-// the table contains the following fields:
+// {prefix}meow_log contains the following fields:
 // `id` numeric primary key
 // `ip` the logee's IP address
 // `date` a timestamp
-// `success` whether or not the log-in happend; 1 valid, 0 failed
+// `success` whether or not the log-in happend; 1 valid, 0 failed, -1 apocalypse
 // `ua` the logee's browser's reported user agent
 // `username` the WP account being accessed
 //
@@ -540,7 +597,7 @@ add_action('plugins_loaded', 'meow_db_update');
 function meow_get_IP($ip=null){
 	//if not supplied, let's use REMOTE_ADDR
 	if(is_null($ip))
-		$ip = getenv('REMOTE_ADDR');
+		$ip = $_SERVER['REMOTE_ADDR'];
 
 	//return the ip, unless it is invalid
 	return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) ? $ip : false;
@@ -598,7 +655,9 @@ function meow_check_IP(){
 		return true;
 
 	//ignore the server's IP, and anything defined by the user
-	$ignore = array_merge(array(getenv('SERVER_ADDR')), meow_get_option('meow_ip_exempt'));
+	$ignore = meow_get_option('meow_ip_exempt');
+	if(filter_var($_SERVER['SERVER_ADDR'], FILTER_VALIDATE_IP))
+		$ignore[] = $_SERVER['SERVER_ADDR'];
 
 	//further scrutinize only if the IP address is valid
 	if(false !== ($ip = meow_get_IP()) && !in_array($ip, $ignore))
@@ -618,9 +677,9 @@ function meow_check_IP(){
 			//indicate in the logs that the apocalypse screen was shown:
 			meow_login_log(-1, 'n/a');
 			//try to set the 403 status header
-			header((isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);
+			header( (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);
 			//print the page
-			echo '<html><head><title>' . meow_get_option('meow_apocalypse_title') . '</title><link rel="stylesheet" href="' . get_bloginfo('stylesheet_url') . '" /></head><body>' . meow_get_option('meow_apocalypse_content') . '</body></html>';
+			echo '<html><head><title>' . esc_attr(meow_get_option('meow_apocalypse_title')) . '</title><link rel="stylesheet" href="' . get_bloginfo('stylesheet_url') . '" /></head><body>' . meow_get_option('meow_apocalypse_content') . '</body></html>';
 			exit;
 		}
 	}
@@ -644,7 +703,7 @@ function meow_login_log($status=0, $username=''){
 	$time = (int) $wpdb->get_var("SELECT UNIX_TIMESTAMP()");
 
 	//storing user agent?
-	$ua = meow_get_option('meow_store_ua') ? getenv("HTTP_USER_AGENT") : '';
+	$ua = meow_get_option('meow_store_ua') ? $_SERVER['HTTP_USER_AGENT'] : '';
 
 	//this only works if we have a valid IP
 	if(false !== ($ip = meow_get_IP()))
@@ -842,10 +901,7 @@ function meow_wpcontent_htaccess_exists(){
 		return false;
 
 	//finally, are the contents as expected (give or take some new lines)
-	$htcontent = str_replace("\r\n", "\n", $htcontent);
-	$htcontent = str_replace("\r", "\n", $htcontent);
-	$htcontent = trim($htcontent);
-	return $htcontent === MEOW_HTACCESS;
+	return trim(meow_newlines($htcontent)) === MEOW_HTACCESS;
 }
 
 //--------------------------------------------------
@@ -884,6 +940,35 @@ function meow_remove_wpcontent_htaccess(){
 
 	//if the unlink worked, the file should be gone, right?
 	return !meow_wpcontent_htaccess_exists();
+}
+
+//--------------------------------------------------
+//Disable plugin/theme editor
+//
+// @since 1.3.4
+//
+// @param n/a
+// @return true
+function meow_disable_editor(){
+	if(!defined('DISALLOW_FILE_EDIT'))
+		define('DISALLOW_FILE_EDIT', true);
+
+	return true;
+}
+if(meow_get_option('meow_disable_editor'))
+	add_action('init','meow_disable_editor');
+
+//--------------------------------------------------
+//Use Linux-standard new lines only
+//
+// @since 1.3.4
+//
+// @param string
+// @return updated string
+function meow_newlines($str=''){
+	$str = str_replace("\r\n", "\n", $str);
+	$str = str_replace("\r", "\n", $str);
+	return $str;
 }
 
 //----------------------------------------------------------------------  end misc security

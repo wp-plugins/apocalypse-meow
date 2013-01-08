@@ -20,6 +20,7 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
   * Disable the "generator" meta tag, which betrays which version of WordPress you are running (thereby making exploits more easily targetted).
   * Prevent the direct execution of PHP scripts in `wp-content/`.
   * Rename the default "admin" user.
+  * Disable the theme/plugin editor.
 
 == Installation ==
 
@@ -98,6 +99,15 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.3.4 =
+* Lowered data retention minimum to 10 days;
+* Option to manually clear data;
+* Uninstallation now removes all plugin data/settings;
+* Option to disable theme/plugin editor;
+* Prevent installation on WPMU blogs;
+* Use $_SERVER instead of getenv() as it is compatible with more server environments;
+* Miscellaneous small bug fixes;
+
 = 1.3.3 =
 * Added log-in statistics;
 * Storing UA string with log-in attempt is now optional (default disabled);
@@ -130,6 +140,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.4 =
+New features and bug fixes.
 
 = 1.3.3 =
 Added a stats page and more settings.

@@ -29,7 +29,7 @@ global $wpdb;
 //first, let's find the date range for the data
 $dates = array();
 //if there is no min_date, there are no records, no stats
-if(false === ($min_date = $wpdb->get_var("SELECT MIN(DATE(FROM_UNIXTIME(`date`))) FROM `{$wpdb->prefix}meow_log`")))
+if(false === ($min_date = $wpdb->get_var("SELECT MIN(DATE(FROM_UNIXTIME(`date`))) FROM `{$wpdb->prefix}meow_log`")) || !intval($wpdb->get_var("SELECT COUNT(*) FROM `{$wpdb->prefix}meow_log`")))
 {
 	echo '<div class="wrap">' . meow_get_header() . '<div class="error fade"><p>There is no log-in history.</p></div></div>';
 	exit;
@@ -311,7 +311,7 @@ jQuery(function () {
 			$tmp++;
 			if($tmp > 10)
 				break;
-			$label = str_replace("'", '', $k2);
+			$label = esc_js($k2);
 			if(strlen($k2) > 20)
 				$label = trim(substr($k2,0,17) . '...');
 			$percent = round(100 * $v2/$num);

@@ -48,13 +48,13 @@ if(getenv("REQUEST_METHOD") === 'POST')
 		elseif($meowdata['meow_fail_window'] > 86400)
 			$meow['meow_fail_window'] = 43200;
 	$meowdata['meow_fail_reset_on_success'] = intval($_POST['meow_fail_reset_on_success']) === 1;
-	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(explode("\n", $_POST['meow_ip_exempt']));
+	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(explode("\n", meow_newlines($_POST['meow_ip_exempt'])));
 	$meowdata['meow_apocalypse_title'] = trim(strip_tags($_POST["meow_apocalypse_title"]));
 	$meowdata['meow_apocalypse_content'] = trim($_POST['blurb']);
 	$meowdata['meow_clean_database'] = intval($_POST['meow_clean_database']) === 1;
 	$meowdata['meow_data_expiration'] = (int) $_POST['meow_data_expiration'];
 		//silently correct bad data
-		if($meowdata['meow_data_expiration'] < 30)
+		if($meowdata['meow_data_expiration'] < 10)
 			$meowdata['meow_data_expiration'] = 90;
 	$meowdata['meow_store_ua'] = intval($_POST['meow_store_ua']) === 1;
 
@@ -67,6 +67,8 @@ if(getenv("REQUEST_METHOD") === 'POST')
 			$meowdata['meow_password_length'] = 5;
 
 	$meowdata['meow_remove_generator_tag'] = intval($_POST['meow_remove_generator_tag']) === 1;
+
+	$meowdata['meow_disable_editor'] = intval($_POST['meow_disable_editor']) === 1;
 
 	//bad nonce, don't save
 	if(!wp_verify_nonce($_POST['_wpnonce'],'meow-settings'))
@@ -87,15 +89,15 @@ if(getenv("REQUEST_METHOD") === 'POST')
 		if(intval($_POST["meow_wpcontent_htaccess"]) === 1 && !meow_wpcontent_htaccess_exists())
 		{
 			if(false === meow_add_wpcontent_htaccess())
-				echo '<div class="error fade"><p>WordPress could not automatically create <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution.  You\'ll have to roll up your sleeves and do it manually. Simply copy the following code into a text file named &quot;.htaccess&quot; and upload it to your wp-content/ directory:</p><p><code>' . nl2br(htmlspecialchars(MEOW_HTACCESS)) . '</code></p></div>';
+				echo '<div class="error fade"><p>WordPress could not automatically create <code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>, the file containing the rules to prevent direct PHP script execution.  You\'ll have to roll up your sleeves and do it manually. Simply copy the following code into a text file named &quot;.htaccess&quot; and upload it to your wp-content/ directory:</p><p><code>' . nl2br(esc_html(MEOW_HTACCESS)) . '</code></p></div>';
 			else
-				echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . MEOW_HTACCESS_FILE . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . plugins_url('settings.php', __FILE__) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
+				echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . plugins_url('settings.php', __FILE__) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
 		}
 		//disable wp-content htaccess (only if it presently exists)
 		elseif(intval($_POST["meow_wpcontent_htaccess"]) !== 1 && meow_wpcontent_htaccess_exists())
 		{
 			if(false === meow_remove_wpcontent_htaccess())
-				echo '<div class="error fade"><p>WordPress was unable to delete <code>' . MEOW_HTACCESS_FILE . '</code>, the file containing the rules to prevent direct PHP script execution. Please manually delete this file.</div>';
+				echo '<div class="error fade"><p>WordPress was unable to delete <code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>, the file containing the rules to prevent direct PHP script execution. Please manually delete this file.</div>';
 			else
 				echo '<div class="updated fade"><p>The rules preventing the direct execution of PHP scripts have been lifted.</p>';
 		}
@@ -105,18 +107,19 @@ if(getenv("REQUEST_METHOD") === 'POST')
 		{
 			//new username is already in use
 			if(username_exists($tmp))
-				echo '<div class="error fade"><p>The username &quot;' . htmlspecialchars($tmp) . '&quot; already exists; you\'ll have to come up with something else.</p></div>';
+				echo '<div class="error fade"><p>The username &quot;' . esc_html($tmp) . '&quot; already exists; you\'ll have to come up with something else.</p></div>';
 			//new username is invalidly formatted
 			elseif(!validate_username($tmp))
-				echo '<div class="error fade"><p>The username &quot;' . htmlspecialchars($tmp) . '&quot; is not valid; try again.</p></div>';
+				echo '<div class="error fade"><p>The username &quot;' . esc_html($tmp) . '&quot; is not valid; try again.</p></div>';
 			//let's save it!
 			else
 			{
 				$current_user = wp_get_current_user();
-				echo '<div class="updated fade"><p>Congratulations, the old &quot;admin&quot; user has been successfully changed to &quot;' . htmlspecialchars($tmp) . '&quot;.' . ($current_user->user_login === 'admin' ? ' Unfortunately you were logged in as that now nonexistent user, so you\'ll have to take a moment to <a href="' . admin_url('options-general.php?page=meow-settings') .  '">re-login</a> (as &quot;' . htmlspecialchars($tmp) . '&quot; this time).  :)' : '') . '</p></div>';
+				echo '<div class="updated fade"><p>Congratulations, the old &quot;admin&quot; user has been successfully changed to &quot;' . esc_html($tmp) . '&quot;.' . ($current_user->user_login === 'admin' ? ' Unfortunately you were logged in as that now nonexistent user, so you\'ll have to take a moment to <a href="' . admin_url('options-general.php?page=meow-settings') .  '">re-login</a> (as &quot;' . esc_html($tmp) . '&quot; this time).  :)' : '') . '</p></div>';
 				$wpdb->update($wpdb->users, array('user_login'=>$tmp), array('user_login'=>'admin'), array('%s'), array('%s'));
 				if($current_user->user_login === 'admin')
 					die();
+				$meow_changed_admin = true;
 			}
 		}
 	}
@@ -126,21 +129,9 @@ if(getenv("REQUEST_METHOD") === 'POST')
 //Grab saved or default settings
 else
 {
-	$meowdata['meow_protect_login'] = meow_get_option('meow_protect_login');
-	$meowdata['meow_fail_limit'] = meow_get_option('meow_fail_limit');
-	$meowdata['meow_fail_window'] = meow_get_option('meow_fail_window');
-	$meowdata['meow_fail_reset_on_success'] = meow_get_option('meow_fail_reset_on_success');
-	$meowdata['meow_ip_exempt'] = meow_get_option('meow_ip_exempt');
-	$meowdata['meow_apocalypse_content'] = meow_get_option('meow_apocalypse_content');
-	$meowdata['meow_apocalypse_title'] = meow_get_option('meow_apocalypse_title');
-	$meowdata['meow_store_ua'] = meow_get_option('meow_store_ua');
-	$meowdata['meow_clean_database'] = meow_get_option('meow_clean_database');
-	$meowdata['meow_data_expiration'] = meow_get_option('meow_data_expiration');
-	$meowdata['meow_password_alpha'] = meow_get_option('meow_password_alpha');
-	$meowdata['meow_password_numeric'] = meow_get_option('meow_password_numeric');
-	$meowdata['meow_password_symbol'] = meow_get_option('meow_password_symbol');
-	$meowdata['meow_password_length'] = meow_get_option('meow_password_length');
-	$meowdata['meow_remove_generator_tag'] = meow_get_option('meow_remove_generator_tag');
+	$options = array('meow_protect_login','meow_fail_limit','meow_fail_window','meow_fail_reset_on_success','meow_ip_exempt','meow_apocalypse_content','meow_apocalypse_title','meow_store_ua','meow_clean_database','meow_data_expiration','meow_password_alpha','meow_password_numeric','meow_password_symbol','meow_password_length','meow_remove_generator_tag','meow_disable_editor');
+	foreach($options AS $option)
+		$meowdata[$option] = meow_get_option($option);
 }
 
 //--------------------------------------------------
@@ -188,14 +179,14 @@ else
 						Check this box to disable the direct execution of PHP scripts stored inside wp-content/.
 					</label></p>
 					<p class="description">Note: This will only work if your server environment supports location-specific allow/deny rules in .htaccess.</p>
-					<p class="description">Note #2: This might break things!  Some (lazy) plugins and themes foresake WP's engine and execute their scripts directly (and thus won't work if this option is enabled). If things break so badly you cannot even access this page to disable the option, simply delete <code><?php echo MEOW_HTACCESS_FILE; ?></code> via FTP.</p>
+					<p class="description">Note #2: This might break things!  Some (lazy) plugins and themes foresake WP's engine and execute their scripts directly (and thus won't work if this option is enabled). If things break so badly you cannot even access this page to disable the option, simply delete <code><?php echo esc_html(MEOW_HTACCESS_FILE); ?></code> via FTP.</p>
 				</div>
 			</div>
 			<!--end wp-content .htaccess-->
 
 			<?php
 			//only show this section if relevant
-			if(username_exists('admin')) {
+			if(username_exists('admin') && $meow_changed_admin !== true) {
 			?>
 			<!--start admin user-->
 			<div class="postbox">
@@ -215,7 +206,22 @@ else
 				</div>
 			</div>
 			<!--end admin user-->
-			<?php } ?>
+			<?php }	?>
+
+			<!--start disable editor-->
+			<div class="postbox">
+				<h3 class="hndle">Disable theme/plugin editor</h3>
+				<div class="inside">
+					<p>WordPress comes with the ability to edit theme and plugin files directly through the browser.  Disable this to increase your file security.</p>
+					<p><label for="meow_disable_editor">
+						<input type="checkbox" name="meow_disable_editor" id="meow_disable_editor" value="1" <?php echo ($meowdata['meow_disable_editor'] === true ? 'checked=checked' : ''); ?> />
+						Check this box to disable the file editor.
+					</label></p>
+					<p class="description">Note: This will have no effect if the <code>DISALLOW_FILE_EDIT</code> constant is already defined elsewhere (like wp-config.php or some such).</p>
+				</div>
+			</div>
+			<!--end disable editor-->
+
 
 		</div>
 		<!--end sidebar-->
@@ -256,14 +262,14 @@ else
 								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Exempt IP(s), one per line</th>
 									<td>
-										<textarea name="meow_ip_exempt" rows="5" cols="50"><?php echo trim(implode("\n", $meowdata['meow_ip_exempt'])); ?></textarea>
-										<p class="description">To avoid accidentally banning yourself, you might consider adding your IP address (<code><?php echo getenv('REMOTE_ADDR'); ?></code>) to the above list.</p>
+										<textarea name="meow_ip_exempt" rows="5" cols="50"><?php echo esc_textarea(trim(implode("\n", $meowdata['meow_ip_exempt']))); ?></textarea>
+										<p class="description">To avoid accidentally banning yourself, you might consider adding your IP address (<code><?php echo $_SERVER['REMOTE_ADDR']; ?></code>) to the above list.</p>
 									</td>
 								</tr>
 								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Apocalypse Meow</th>
 									<td>
-										<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo htmlspecialchars($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
+										<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo esc_attr($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
 										<?php echo wp_editor( $meowdata['meow_apocalypse_content'], "blurb", $settings = array('teeny'=>true) ); ?>
 										<p class="description">Note: Some servers may display a generic <code>403 Forbidden</code> page instead, but further log-in attempts are prevented either way.</p>
 									</td>
@@ -277,10 +283,11 @@ else
 								</tr>
 								<tr valign="top" class="meow-protect-login-only">
 									<th scope="row">Database maintenance</th>
-									<td>
+									<td id="td-meow-database-maintenance">
 										<p><label for="meow_clean_database"><input type="checkbox" name="meow_clean_database" id="meow_clean_database" value="1" <?php echo ($meowdata['meow_clean_database'] === true ? 'checked=checked' : ''); ?> /> Check this box to enable database maintenance.</label></p>
-										<p class="meow-clean-database-only">Automatically purge log-in data older than <input type="number" step="10" min="30" id="meow_data_expiration" name="meow_data_expiration" value="<?php echo $meowdata['meow_data_expiration']; ?>" class="small-text" /> days.</p>
+										<p class="meow-clean-database-only">Automatically purge log-in data older than <input type="number" step="10" min="10" id="meow_data_expiration" name="meow_data_expiration" value="<?php echo $meowdata['meow_data_expiration']; ?>" class="small-text" /> days.</p>
 										<p class="meow-clean-database-only description">Note: the maintenance routines are run after a successful log-in, so data might stick around longer than expected if you aren't frequently logging in.</p>
+										<p><button id="meow-purge-data" type="button">Purge ALL Data</button></p>
 									</td>
 								</tr>
 							</tbody>
@@ -371,7 +378,34 @@ meow_toggle_fields('.meow-clean-database-only', jQuery('#meow_clean_database').i
 //show the u/a info
 jQuery("#show-ua-info").click(function(e){
 	e.preventDefault();
-	alert("Software used to access your web site will usually identify information about itself, including its vendor, version, operating system, and so on.  Your User Agent is reported as:\n\n<?php echo str_replace('"', '\"', getenv("HTTP_USER_AGENT")); ?>");
+	alert("Software used to access your web site will usually identify information about itself, including its vendor, version, operating system, and so on.  Your User Agent is reported as:\n\n<?php echo esc_js($_SERVER['HTTP_USER_AGENT']); ?>");
+});
+
+//manually purge data
+jQuery("#meow-purge-data").click(function(e){
+	e.preventDefault();
+	if(confirm("Are you absolutely, positively sure you want to clear ALL the log-in data (history, stats, blocked people, etc.)?  WARNING: This cannot be undone!") == true)
+	{
+		jQuery("#meow-purge-data").attr('disabled','disabled');
+		jQuery.post(ajaxurl, {action: 'meow_purge_data', nonce: '<?php echo wp_create_nonce("m30wpurg3"); ?>'}, function(data){
+			if(parseInt(data) == 1)
+			{
+				jQuery("#meow-purge-data").remove();
+				jQuery('<p />')
+					.text('The data was successfully cleared.')
+					.appendTo('#td-meow-database-maintenance');
+			}
+			else
+			{
+				jQuery("#meow-purge-data").removeAttr('disabled');
+				alert("Oops.  Something went wrong!  Reload this page then try again.");
+			}
+
+			return false;
+		});
+	}
+	else
+		return false;
 });
 
 </script>
