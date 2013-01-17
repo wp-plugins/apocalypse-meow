@@ -1,6 +1,6 @@
 === Plugin Name ===
 Contributors: blobfolio
-Donate link: http://www.blobfolio.com
+Donate link: http://www.blobfolio.com/donate.html
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
 Requires at least: 3.4
 Tested up to: 3.5
