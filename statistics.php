@@ -39,25 +39,28 @@ for($x=0; date("Y-m-d", strtotime("+$x days", strtotime($min_date))) <= $max_dat
 	$dates[date("Y-m-d", strtotime("+$x days", strtotime($min_date)))] = array();
 
 //we want daily counts grouped by status
-$data_date_ip = array(-1=>$dates, 0=>$dates, 1=>$dates);
-$data_date_ua = array(-1=>$dates, 0=>$dates, 1=>$dates);
+$data_date_ip = array(0=>$dates, 1=>$dates);
+$data_date_ua = array(0=>$dates, 1=>$dates);
 $data_date_user = array(0=>$dates, 1=>$dates);
-$data_date_gross = array(-1=>$dates, 0=>$dates, 1=>$dates);
+$data_date_gross = array(0=>$dates, 1=>$dates);
 //and we want overall data too
-$data_ip = array(-1=>array(), 0=>array(), 1=>array());
-$data_ua = array(-1=>array(), 0=>array(), 1=>array());
+$data_ip = array(0=>array(), 1=>array());
+$data_ua = array(0=>array(), 1=>array());
 $data_user = array(0=>array(), 1=>array());
 //and some username stats
 $data_users = array(0=>array(), 1=>array());
 //and some totals
 $total_rows = 0;
-$total_by_status = array(-1=>0, 0=>0, 1=>0);
+$total_by_status = array(0=>0, 1=>0);
 $total_failed = 0;
 $total_banned = 0;
 $total_ip = 0;
 $total_ua = 0;
 $total_user = 0;
 $total_days = count(array_keys($dates));
+//apocalypse stats
+$total_apocalypse = (int) $wpdb->get_var("SELECT SUM(`count`) FROM `{$wpdb->prefix}meow_log_banned`");
+$total_apocalypse_ip = (int) $wpdb->get_var("SELECT COUNT(DISTINCT(`ip`)) FROM `{$wpdb->prefix}meow_log_banned`");
 
 //ok, finally pull some data
 $dbResult = $wpdb->get_results("SELECT `id`, `ip`, DATE(FROM_UNIXTIME(`date`)) AS `date`, `success`, `ua`, `username` FROM `{$wpdb->prefix}meow_log` ORDER BY `date` ASC", ARRAY_A);
@@ -83,7 +86,7 @@ if($wpdb->num_rows > 0)
 		}
 
 		//username
-		if($Row['success'] >= 0 && strlen($Row['username']))
+		if(strlen($Row['username']))
 		{
 			$data_date_user[$Row['success']][$Row['date']][] = $Row['username'];
 			$data_user[$Row['success']][] = $Row['username'];
@@ -99,34 +102,24 @@ if($wpdb->num_rows > 0)
 	}
 
 	//clean up data
-	for($x=-1; $x<=1; $x++)
+	for($x=0; $x<=1; $x++)
 	{
 		foreach(array('data_date_ip','data_date_user','data_date_ua') AS $var)
 		{
-			//usernames aren't stored for apocalypse (-1)
-			if($x < 0 && $var == 'data_date_user')
-				continue;
-
 			foreach(${$var}[$x] AS $k=>$v)
 				${$var}[$x][$k] = array_unique($v);
 		}
 
 		foreach(array('data_ip','data_ua','data_user') AS $var)
-		{
-			//usernames aren't stored for apocalypse (-1)
-			if($x < 0 && $var == 'data_user')
-				continue;
-
 			${$var}[$x] = array_unique(${$var}[$x]);
-		}
 	}
 
 	arsort($data_users[0]);
 	arsort($data_users[1]);
 
 	//count totals
-	$total_ip = count(array_unique(array_merge($data_ip[-1], $data_ip[0], $data_ip[1])));
-	$total_ua = count(array_unique(array_merge($data_ua[-1], $data_ua[0], $data_ua[1])));
+	$total_ip = count(array_unique(array_merge($data_ip[0], $data_ip[1])));
+	$total_ua = count(array_unique(array_merge($data_ua[0], $data_ua[1])));
 	$total_user = count(array_unique(array_merge($data_user[0], $data_user[1])));
 }
 
@@ -206,9 +199,9 @@ if($wpdb->num_rows > 0)
 						<li><span class="meow-label">Total:</span><?php echo $total_by_status[0]; ?></li>
 						<li><span class="meow-label">Daily average:</span><?php echo round($total_by_status[0]/$total_days,1); ?></li>
 						<li><span class="meow-label">Unique IPs:</span><?php echo count($data_ip[0]); ?></li>
-						<li><span class="meow-label">IPs banned:</span><?php echo count(array_intersect($data_ip[0], $data_ip[-1])); ?></li>
-						<li><span class="meow-label">Apocalypses served:</span><?php echo $total_by_status[-1]; ?></li>
-						<li><span class="meow-label">Apocalypses per day:</span><?php echo round($total_by_status[-1]/$total_days,1); ?></li>
+						<li><span class="meow-label">IPs banned:</span><?php echo $total_apocalypse_ip; ?></li>
+						<li><span class="meow-label">Apocalypses served:</span><?php echo $total_apocalypse; ?></li>
+						<li><span class="meow-label">Apocalypses per day:</span><?php echo round($total_apocalypse/$total_days,1); ?></li>
 						<?php
 						if(meow_get_option('meow_store_ua'))
 							echo '<li><span class="meow-label">Unique browsers:</span>' . count($data_ua[0]) . '</li>';

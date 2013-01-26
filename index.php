@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.4
+Version: 1.3.5
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -41,10 +41,10 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 // @return true
 function meow_init_variables() {
 	//the database version
-	define('MEOW_DB', '1.0.0');
+	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.3.4');
+	define('MEOW_VERSION', '1.3.5');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -106,10 +106,10 @@ function meow_get_option($option){
 			return meow_sanitize_ips(get_option('meow_ip_exempt', array()));
 		//the apocalypse page title
 		case 'meow_apocalypse_title':
-			return trim(strip_tags(get_option('meow_apocalypse_title', 'Nothing here just meow...')));
+			return trim(strip_tags(get_option('meow_apocalypse_title', 'Oops...')));
 		//the apocalypse page content
 		case 'meow_apocalypse_content':
-			return get_option('meow_apocalypse_content', '<img src="' . esc_url(MEOW_IMAGE) . '" style="width: 64px; height: 64px; border: 0; margin-right: 10px;" align="left" />You have exceeded the maximum number of log-in attempts.<br>Sorry.');
+			return strip_tags(get_option('meow_apocalypse_content', "You have exceeded the maximum number of log-in attempts.\nSorry."));
 		//whether or not to store the UA string
 		case 'meow_store_ua':
 			return (bool) get_option('meow_store_ua', false);
@@ -343,15 +343,9 @@ function meow_parse_request( &$wp )
 		{
 			foreach($dbResult AS $Row)
 			{
-				if(intval($Row["success"]) === 1)
-					$status = 'success';
-				elseif(intval($Row["success"]) === -1)
-					$status = 'apocalypse';
-				else
-					$status = 'failure';
 				echo "\n\"" . implode('","', array(
 					0 => date("Y-m-d H:i:s", $Row["date"]),
-					1 => $status,
+					1 => (intval($Row["success"]) === 1 ? 'success' : 'failure'),
 					2 => str_replace('"', '\"', $Row["username"]),
 					3 => $Row["ip"],
 					4 => str_replace('"', '\"', $Row["ua"])
@@ -511,6 +505,7 @@ function meow_purge_data(){
 
 		//delete it all!
 		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE 1");
+		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log_banned` WHERE 1");
 
 		echo 1;
 	}
@@ -534,9 +529,16 @@ add_action('wp_ajax_meow_purge_data', 'meow_purge_data');
 // `id` numeric primary key
 // `ip` the logee's IP address
 // `date` a timestamp
-// `success` whether or not the log-in happend; 1 valid, 0 failed, -1 apocalypse
+// `success` whether or not the log-in happend; 1 valid, 0 failed
 // `ua` the logee's browser's reported user agent
 // `username` the WP account being accessed
+//
+// {prefix}meow_log_banned contains the following fields:
+// `id` numeric primary key
+// `ip` the logee's IP address
+// `date` a date
+// `ua` the logee's browser's reported user agent
+// `count` the number of displays grouped by ip/date/ua
 //
 // @since 1.0.0
 //
@@ -545,6 +547,7 @@ add_action('wp_ajax_meow_purge_data', 'meow_purge_data');
 function meow_SQL(){
 	global $wpdb;
 
+	//successful and failed log-in attempts
 	$sql = "CREATE TABLE {$wpdb->prefix}meow_log (
   id bigint(15) NOT NULL AUTO_INCREMENT,
   ip varchar(39) NOT NULL,
@@ -559,6 +562,21 @@ function meow_SQL(){
   KEY ua (ua),
   KEY username (username)
 );";
+
+	//apocalypse screen triggers
+	$sql .= "CREATE TABLE {$wpdb->prefix}meow_log_banned (
+  id bigint(15) NOT NULL AUTO_INCREMENT,
+  ip varchar(39) NOT NULL,
+  date date NOT NULL,
+  ua varchar(250) NOT NULL,
+  count bigint(15) DEFAULT 1 NOT NULL,
+  PRIMARY KEY  (id),
+  UNIQUE KEY user (ip,date,ua),
+  KEY ip (ip),
+  KEY date (date),
+  KEY ua (ua)
+);";
+
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
@@ -578,11 +596,49 @@ register_activation_hook(__FILE__,'meow_SQL');
 // @return true
 function meow_db_update(){
 	if(get_option('meow_db_version', '0.0.0') !== MEOW_DB)
+	{
 		meow_SQL();
+		meow_migrate_banned();
+	}
 
 	return true;
 }
-add_action('plugins_loaded', 'meow_db_update');
+add_action('init', 'meow_db_update');
+
+//--------------------------------------------------
+//Migrate any logged apocalypses from meow_log to
+//meow_log_banned
+//
+// @since 1.3.5
+//
+// @param n/a
+// @return true
+function meow_migrate_banned(){
+	global $wpdb;
+
+	$dbResult = $wpdb->get_results("SELECT `ip`, DATE(FROM_UNIXTIME(`date`)) AS `date`, `ua` FROM `{$wpdb->prefix}meow_log` WHERE `success`=-1 ORDER BY `id` ASC", ARRAY_A);
+	if($wpdb->num_rows > 0)
+	{
+		//generate insert values
+		$inserts = array();
+		foreach($dbResult AS $Row)
+		{
+			//insert them 500 at a time
+			if(count($inserts) === 500)
+			{
+				$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned` (`ip`,`date`,`ua`) VALUES " . implode(',', $inserts) . " ON DUPLICATE KEY UPDATE `count`=`count`+1");
+				$inserts = array();
+			}
+			$inserts[] = "('" . mysql_real_escape_string($Row["ip"]) . "','" . mysql_real_escape_string($Row['date']) . "','" . mysql_real_escape_string($Row["ua"]) . "')";
+		}
+		//insert whatever's left over
+		$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned` (`ip`,`date`,`ua`) VALUES " . implode(',', $inserts) . " ON DUPLICATE KEY UPDATE `count`=`count`+1");
+		//remove from meow_log
+		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE `success`=-1");
+	}
+
+	return true;
+}
 
 //--------------------------------------------------
 //Get and/or validate an IP address
@@ -623,7 +679,7 @@ function meow_sanitize_ips($ips){
 		foreach($ips AS $ip)
 		{
 			if(false !== meow_get_IP(trim($ip)))
-				$valid[] = $ip;
+				$valid[] = trim($ip);
 		}
 	}
 
@@ -675,11 +731,13 @@ function meow_check_IP(){
 		if($meow_fail_limit <= (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . mysql_real_escape_string($ip) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
 		{
 			//indicate in the logs that the apocalypse screen was shown:
-			meow_login_log(-1, 'n/a');
+			$ua = meow_get_option('meow_store_ua') ? mysql_real_escape_string($_SERVER['HTTP_USER_AGENT']) : '';
+			$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned`(`ip`,`date`,`ua`) VALUES('" . mysql_real_escape_string($ip) . "',CURDATE(),'$ua') ON DUPLICATE KEY UPDATE `count`=`count`+1");
+
 			//try to set the 403 status header
 			header( (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);
 			//print the page
-			echo '<html><head><title>' . esc_attr(meow_get_option('meow_apocalypse_title')) . '</title><link rel="stylesheet" href="' . get_bloginfo('stylesheet_url') . '" /></head><body>' . meow_get_option('meow_apocalypse_content') . '</body></html>';
+			echo '<html><head><title>' . esc_attr(meow_get_option('meow_apocalypse_title')) . '</title></head><body>' . nl2br(meow_get_option('meow_apocalypse_content')) . '</body></html>';
 			exit;
 		}
 	}
@@ -756,6 +814,8 @@ function meow_clean_database(){
 		//clear old entries
 		$meow_data_expiration = meow_get_option('meow_data_expiration');
 		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log` WHERE `date` < " . strtotime("-$meow_data_expiration days", $time));
+		//and clear banned entries
+		$wpdb->query("DELETE FROM `{$wpdb->prefix}meow_log_banned` WHERE `date` < '" . date("Y-m-d", strtotime("-$meow_data_expiration days", $time)) . "'");
 	}
 
 	return true;

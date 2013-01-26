@@ -20,6 +20,7 @@ foreach(array('meow_db_version','meow_protect_login','meow_fail_limit','meow_fai
 //try to remove the table... not all db uses will have this privilege
 global $wpdb;
 $wpdb->query("DROP TABLE IF EXISTS `{$wpdb->prefix}meow_log`");
+$wpdb->query("DROP TABLE IF EXISTS `{$wpdb->prefix}meow_log_banned`");
 
 
 

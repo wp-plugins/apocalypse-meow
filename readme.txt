@@ -3,7 +3,7 @@ Contributors: blobfolio
 Donate link: http://www.blobfolio.com/donate.html
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
 Requires at least: 3.4
-Tested up to: 3.5
+Tested up to: 3.5.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -99,6 +99,12 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.3.5 =
+* Changed the fail window unit from seconds to minutes;
+* More efficient logging of Apocalypse triggers;
+* Simplified Apocalypse page options;
+* Bug fix: database upgrade procedure skipped;
+
 = 1.3.4 =
 * Lowered data retention minimum to 10 days;
 * Option to manually clear data;
@@ -140,6 +146,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.5 =
+Minor improvements and bug fixes.
 
 = 1.3.4 =
 New features and bug fixes.

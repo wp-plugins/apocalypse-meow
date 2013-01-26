@@ -71,7 +71,7 @@ elseif(!current_user_can('manage_options'))
 		echo "Log-in data is currently retained forever, which is a long time.  If you find the table below getting a touch unruly, you can have the system automatically purge records after a certain amount of time.";
 ?>  Visit the <a href="<?php echo admin_url('options-general.php?page=meow-settings'); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
 
-	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label><label for="view-apocalypse"><input type="checkbox" id="view-apocalypse" data-status="record-apocalypse" checked=checked /> Apocalypse</label>
+	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label></p>
 
 	<table id="meow-login-history" class="widefat tablesorter">
 		<thead>
@@ -96,12 +96,7 @@ elseif(!current_user_can('manage_options'))
 		foreach($dbResult AS $Row)
 		{
 			$num++;
-			if(intval($Row["success"]) === 1)
-				$status = 'success';
-			elseif(intval($Row["success"]) === -1)
-				$status = 'apocalypse';
-			else
-				$status = 'failure';
+			$status = (intval($Row["success"]) === 1) ? 'success' : 'failure';
 ?>
 			<tr class="record-<?php echo $status; ?>">
 				<td class="meow-record-number"></td>

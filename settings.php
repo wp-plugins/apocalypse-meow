@@ -41,7 +41,7 @@ if(getenv("REQUEST_METHOD") === 'POST')
 		//silently correct invalid choice
 		if($meowdata['meow_fail_limit'] < 1)
 			$meow['meow_fail_limit'] = 5;
-	$meowdata['meow_fail_window'] = (int) $_POST['meow_fail_window'];
+	$meowdata['meow_fail_window'] = 60 * intval($_POST['meow_fail_window']);
 		//silently correct invalid choice
 		if($meowdata['meow_fail_window'] < 60)
 			$meow['meow_fail_window'] = 43200;
@@ -50,7 +50,7 @@ if(getenv("REQUEST_METHOD") === 'POST')
 	$meowdata['meow_fail_reset_on_success'] = intval($_POST['meow_fail_reset_on_success']) === 1;
 	$meowdata['meow_ip_exempt'] = meow_sanitize_ips(explode("\n", meow_newlines($_POST['meow_ip_exempt'])));
 	$meowdata['meow_apocalypse_title'] = trim(strip_tags($_POST["meow_apocalypse_title"]));
-	$meowdata['meow_apocalypse_content'] = trim($_POST['blurb']);
+	$meowdata['meow_apocalypse_content'] = trim(strip_tags($_POST['meow_apocalypse_content']));
 	$meowdata['meow_clean_database'] = intval($_POST['meow_clean_database']) === 1;
 	$meowdata['meow_data_expiration'] = (int) $_POST['meow_data_expiration'];
 		//silently correct bad data
@@ -252,8 +252,8 @@ else
 										<label for="meow_fail_limit">The maximum number of failed log-in attempts.</label>
 										<br />
 
-										<input type="number" step="60" min="60" max="86400" id="meow_fail_window" name="meow_fail_window" value="<?php echo $meowdata['meow_fail_window']; ?>" class="small-text" />
-										<label for="meow_fail_window">The time (in seconds) before a failed log-in attempt expires.</label>
+										<input type="number" step="1" min="1" max="1440" id="meow_fail_window" name="meow_fail_window" value="<?php echo floor($meowdata['meow_fail_window']/60); ?>" class="small-text" />
+										<label for="meow_fail_window">The time (in minutes) before a failed log-in attempt expires.</label>
 										<br />
 
 										<label for="meow_fail_reset_on_success"><input type="checkbox" name="meow_fail_reset_on_success" id="meow_fail_reset_on_success" value="1" <?php echo ($meowdata['meow_fail_reset_on_success'] === true ? 'checked=checked' : ''); ?> /> Reset fail count on successful log-in.</label>
@@ -270,8 +270,8 @@ else
 									<th scope="row">Apocalypse Meow</th>
 									<td>
 										<input type="text" name="meow_apocalypse_title" id="meow_apocalypse_title" value="<?php echo esc_attr($meowdata['meow_apocalypse_title']); ?>" class="regular-text" />
-										<?php echo wp_editor( $meowdata['meow_apocalypse_content'], "blurb", $settings = array('teeny'=>true) ); ?>
-										<p class="description">Note: Some servers may display a generic <code>403 Forbidden</code> page instead, but further log-in attempts are prevented either way.</p>
+										<p><textarea name="meow_apocalypse_content" id="meow_apocalypse_content" rows="5" cols="50"><?php echo esc_textarea($meowdata['meow_apocalypse_content']); ?></textarea></p>
+										<p class="description">Note: Some servers may display a generic <code>403 Forbidden</code> page instead of the above message, but further log-in attempts are prevented either way.</p>
 									</td>
 								</tr>
 								<tr valign="top" class="meow-protect-login-only">
