@@ -841,7 +841,7 @@ add_action('wp_login','meow_clean_database');
 // @param $pass1 password
 // @param $pass2 password (again)
 // @return true
-function meow_password_rules_check($user, &$pass1, &$pass2){ meow_password_rules(&$pass1, &$pass2); }
+function meow_password_rules_check($user, &$pass1, &$pass2){ meow_password_rules($pass1, $pass2); }
 add_action('check_passwords','meow_password_rules_check', 10, 3);
 
 //--------------------------------------------------

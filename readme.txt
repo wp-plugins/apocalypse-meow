@@ -99,6 +99,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.3.6 =
+* Bug fix: call-time pass-by-reference warning/error in PHP 5.3+;
+
 = 1.3.5 =
 * Changed the fail window unit from seconds to minutes;
 * More efficient logging of Apocalypse triggers;
@@ -146,6 +149,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.3.6 =
+Bug fix affecting PHP 5.3+.
 
 = 1.3.5 =
 Minor improvements and bug fixes.
