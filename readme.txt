@@ -27,7 +27,6 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
 1. Unzip the archive and upload the entire `apocalypse-meow` directory to your `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 3. Review and change the settings by selecting 'Apocalypse Meow' in the 'Settings' menu in WordPress.
-4. See also: 'Log-in History' in the 'Users' menu in WordPress to, well, view the log-in history.
 
 == Frequently Asked Questions ==
 
