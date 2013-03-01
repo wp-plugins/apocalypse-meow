@@ -30,31 +30,6 @@ elseif(!current_user_can('manage_options'))
 		display: none;
 	}
 
-	table.tablesorter thead tr .header, table.tablesorter thead tr .headerSortUp, table.tablesorter thead tr .headerSortDown {
-		position: relative;
-		cursor: pointer;
-	}
-	table.tablesorter thead tr .header:after, table.tablesorter thead tr .headerSortUp:after, table.tablesorter thead tr .headerSortDown:after {
-		content: '';
-		width: 7px;
-		position: absolute;
-		left: 7px;
-		background: transparent url('<?php echo plugins_url('jquery.tablesorter.png', __FILE__); ?>') scroll 0 0 no-repeat;
-	}
-	table.tablesorter thead tr .header:after {
-		height: 9px;
-		top: 13px;
-	}
-	table.tablesorter thead tr .headerSortUp:after {
-		height: 4px;
-		top: 13px;
-	}
-	table.tablesorter thead tr .headerSortDown:after {
-		height: 4px;
-		background-position: 0 -5px;
-		top: 18px;
-	}
-
 </style>
 <div class="wrap">
 
@@ -89,7 +64,7 @@ elseif(!current_user_can('manage_options'))
 	global $wpdb;
 
 	//grab the data, if any
-	$dbResult = $wpdb->get_results("SELECT * FROM `{$wpdb->prefix}meow_log` ORDER BY `date` DESC", ARRAY_A);
+	$dbResult = $wpdb->get_results("SELECT UNIX_TIMESTAMP() - `date` AS `date`, `success`, `username`, `ip`, `ua` FROM `{$wpdb->prefix}meow_log` ORDER BY `date` DESC", ARRAY_A);
 	if($wpdb->num_rows)
 	{
 		$num = 0;
@@ -100,7 +75,7 @@ elseif(!current_user_can('manage_options'))
 ?>
 			<tr class="record-<?php echo $status; ?>">
 				<td class="meow-record-number"></td>
-				<td><?php echo date("Y-m-d H:i:s", $Row["date"]); ?></td>
+				<td><?php echo date("Y-m-d H:i:s", strtotime("-{$Row["date"]} seconds", current_time('timestamp'))); ?></td>
 				<td><?php echo $status; ?></td>
 				<td><?php echo esc_html($Row["username"]); ?></td>
 				<td><?php echo esc_html($Row["ip"]); ?></td>

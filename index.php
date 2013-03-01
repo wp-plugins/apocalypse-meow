@@ -3,13 +3,13 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.3.6
+Version: 1.4.0
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-	Copyright © 2012  Josh Stoik  (email: josh@blobfolio.com)
+	Copyright © 2013  Josh Stoik  (email: josh@blobfolio.com)
 
 	This program is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License
@@ -44,7 +44,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.3.6');
+	define('MEOW_VERSION', '1.4.0');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -104,6 +104,9 @@ function meow_get_option($option){
 		//an array of IP addresses to ignore
 		case 'meow_ip_exempt':
 			return meow_sanitize_ips(get_option('meow_ip_exempt', array()));
+		//a list of IPs that have been temporarily pardoned
+		case 'meow_ip_pardoned':
+			return meow_sanitize_ips(get_option('meow_ip_pardoned', array()));
 		//the apocalypse page title
 		case 'meow_apocalypse_title':
 			return trim(strip_tags(get_option('meow_apocalypse_title', 'Oops...')));
@@ -234,6 +237,7 @@ function meow_settings(){
 function meow_history_menu(){
 	$page = add_users_page('Log-in History', 'Log-in History', 'manage_options', 'meow-history', 'meow_history');
 	add_action('admin_print_scripts-' . $page, 'meow_enqueue_js_tablesorter');
+	add_action( 'admin_print_styles-' . $page, 'meow_enqueue_css_tablesorter' );
 	return true;
 }
 add_action('admin_menu', 'meow_history_menu');
@@ -277,6 +281,35 @@ add_action('admin_menu', 'meow_statistics_menu');
 // @return true
 function meow_statistics(){
 	require_once(dirname(__FILE__) . '/statistics.php');
+	return true;
+}
+
+//--------------------------------------------------
+//Create a Users->Log-in Jail menu item
+//
+// @since 1.4.0
+//
+// @param n/a
+// @return true
+function meow_jail_menu(){
+	$page = add_users_page('Log-in Jail', 'Log-in Jail', 'manage_options', 'meow-jail', 'meow_jail');
+	add_action('admin_print_scripts-' . $page, 'meow_enqueue_js_tablesorter');
+	add_action( 'admin_print_styles-' . $page, 'meow_enqueue_css_tablesorter' );
+	return true;
+}
+add_action('admin_menu', 'meow_jail_menu');
+
+//--------------------------------------------------
+//The Users->Log-in Jail page
+//
+// this is an external file (jail.php)
+//
+// @since 1.4.0
+//
+// @param n/a
+// @return true
+function meow_jail(){
+	require_once(dirname(__FILE__) . '/jail.php');
 	return true;
 }
 
@@ -411,7 +444,8 @@ function meow_deactivate_multisite(){
 add_action('admin_init', 'meow_deactivate_multisite');
 
 //--------------------------------------------------
-//Register jquery.tablesorter.min.js for login history
+//Register jquery.tablesorter.min.js for login
+//history and jail
 //
 // @since 1.3.3
 //
@@ -424,7 +458,8 @@ function meow_register_js_tablesorter(){
 add_action('admin_init','meow_register_js_tablesorter');
 
 //--------------------------------------------------
-//Enqueue jquery.tablesorter.min.js for login history
+//Enqueue jquery.tablesorter.min.js for login
+//history and jail
 //
 // @since 1.3.3
 //
@@ -432,6 +467,33 @@ add_action('admin_init','meow_register_js_tablesorter');
 // @return true
 function meow_enqueue_js_tablesorter(){
 	wp_enqueue_script('meow_js_tablesorter');
+	return true;
+}
+
+//--------------------------------------------------
+//Register jquery.tablesorter.css for login history
+//and jail
+//
+// @since 1.4.0
+//
+// @param n/a
+// @return true
+function meow_register_css_tablesorter(){
+	wp_register_style('meow_css_tablesorter', plugins_url('jquery.tablesorter.css', __FILE__));
+	return true;
+}
+add_action('admin_init','meow_register_css_tablesorter');
+
+//--------------------------------------------------
+//Enqueue jquery.tablesorter.css for login history
+//and jail
+//
+// @since 1.4.0
+//
+// @param n/a
+// @return true
+function meow_enqueue_css_tablesorter(){
+	wp_enqueue_style('meow_css_tablesorter');
 	return true;
 }
 
@@ -474,7 +536,7 @@ function meow_enqueue_js_flot(){
 // @param n/a
 // @return html
 function meow_get_header(){
-	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Log-in History'=>'users.php?page=meow-history', 'Statistics'=>'users.php?page=meow-statistics');
+	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Log-in History'=>'users.php?page=meow-history', 'Log-in Jail'=>'users.php?page=meow-jail', 'Statistics'=>'users.php?page=meow-statistics');
 
 	$xout = '<img src="' . esc_url(MEOW_IMAGE) . '" alt="kitten" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
 	<h2>Apocalypse Meow</h2>
@@ -499,7 +561,7 @@ function meow_get_header(){
 // @return n/a
 function meow_purge_data(){
 	//verify ajax nonce
-	if(check_ajax_referer( 'm30wpurg3', 'nonce', false))
+	if(check_ajax_referer( 'm30wpurg3', 'nonce', false) && current_user_can('manage_options'))
 	{
 		global $wpdb;
 
@@ -512,6 +574,37 @@ function meow_purge_data(){
 	die();
 }
 add_action('wp_ajax_meow_purge_data', 'meow_purge_data');
+
+//--------------------------------------------------
+//Pardon a banned IP
+//
+// @since 1.4.0
+//
+// @param n/a
+// @return n/a
+function meow_login_pardon(){
+	//verify ajax nonce
+	if(check_ajax_referer( 'm30wpardon', 'nonce', false) && current_user_can('manage_options'))
+	{
+		//let's take a look at the IP being submitted
+		$ip = $_POST['ip'];
+
+		if(filter_var($ip, FILTER_VALIDATE_IP))
+		{
+			//add it to the pardon list, if applicable
+			$pardoned = meow_get_option('meow_ip_pardoned');
+			if(!in_array($ip, $pardoned))
+			{
+				$pardoned[] = $ip;
+				update_option('meow_ip_pardoned', $pardoned);
+			}
+
+			echo 1;
+		}
+	}
+	die();
+}
+add_action('wp_ajax_meow_login_pardon', 'meow_login_pardon');
 
 //----------------------------------------------------------------------  end WP backend stuff
 
@@ -607,7 +700,9 @@ add_action('init', 'meow_db_update');
 
 //--------------------------------------------------
 //Migrate any logged apocalypses from meow_log to
-//meow_log_banned
+//meow_log_banned (the original storage method
+//could take up way too  much space, given how dumb
+//most log-in robots are)
 //
 // @since 1.3.5
 //
@@ -718,6 +813,11 @@ function meow_check_IP(){
 	//further scrutinize only if the IP address is valid
 	if(false !== ($ip = meow_get_IP()) && !in_array($ip, $ignore))
 	{
+		//check for pardons, first!
+		$meow_ip_pardoned = meow_get_option('meow_ip_pardoned');
+		if(false !== ($pardon_key = array_search($ip, $meow_ip_pardoned)))
+			return true;
+
 		//user settings
 		$meow_fail_limit = meow_get_option('meow_fail_limit');
 		$meow_fail_window = meow_get_option('meow_fail_window');
@@ -765,7 +865,18 @@ function meow_login_log($status=0, $username=''){
 
 	//this only works if we have a valid IP
 	if(false !== ($ip = meow_get_IP()))
+	{
+		//check for and remove pardons, if any
+		$meow_ip_pardoned = meow_get_option('meow_ip_pardoned');
+		if(false !== ($pardon_key = array_search($ip, $meow_ip_pardoned)))
+		{
+			//pardons are only good once
+			unset($meow_ip_pardoned[$pardon_key]);
+			update_option('meow_ip_pardoned', $meow_ip_pardoned);
+		}
 		$wpdb->insert("{$wpdb->prefix}meow_log", array("ip"=>$ip, "ua"=>$ua, "date"=>$time, "success"=>$status, "username"=>$username), array('%s', '%s', '%d', '%d', '%s'));
+	}
+
 
 	return true;
 }

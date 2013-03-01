@@ -98,6 +98,11 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.4.0 =
+* Added log-in jail page to view currently banned IPs;
+* Added ability to temporarily pardon a banned IP;
+* Log-in history now displayed in viewer's timezone;
+
 = 1.3.6 =
 * Bug fix: call-time pass-by-reference warning/error in PHP 5.3+;
 
@@ -148,6 +153,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.4.0 =
+New features added.
 
 = 1.3.6 =
 Bug fix affecting PHP 5.3+.
