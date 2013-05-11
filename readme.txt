@@ -99,7 +99,7 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 == Changelog ==
 
 = 1.4.1 =
-* Replaced deprecated (as of PHP 5.5) functions.
+* Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0.
 
 = 1.4.0 =
 * Added log-in jail page to view currently banned IPs;
@@ -158,7 +158,7 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 == Upgrade Notice ==
 
 = 1.4.1 =
-Replaced deprecated functions.  Users of PHP 5.5.0 or newer should update.
+Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0.
 
 = 1.4.0 =
 New features added.
