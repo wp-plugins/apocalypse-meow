@@ -62,9 +62,9 @@ if($meow_fail_reset_on_success && count($meow_banned))
 		//revalidate each of these manually
 		foreach($dbResult AS $Row)
 		{
-			$meow_last_successful = (int) $wpdb->get_var("SELECT MAX(`date`) FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . $wpdb->escape($Row['ip']) . "' AND `success`=1");
+			$meow_last_successful = (int) $wpdb->get_var("SELECT MAX(`date`) FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . esc_sql($Row['ip']) . "' AND `success`=1");
 			//this person isn't banned after all...
-			if($meow_fail_limit > (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . $wpdb->escape($Row['ip']) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
+			if($meow_fail_limit > (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . esc_sql($Row['ip']) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
 				unset($meow_banned[$Row['ip']]);
 		}
 	}

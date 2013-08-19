@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.4.1
+Version: 1.4.2
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -724,7 +724,7 @@ function meow_migrate_banned(){
 				$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned` (`ip`,`date`,`ua`) VALUES " . implode(',', $inserts) . " ON DUPLICATE KEY UPDATE `count`=`count`+1");
 				$inserts = array();
 			}
-			$inserts[] = "('" . $wpdb->escape($Row["ip"]) . "','" . $wpdb->escape($Row['date']) . "','" . $wpdb->escape($Row["ua"]) . "')";
+			$inserts[] = "('" . esc_sql($Row["ip"]) . "','" . esc_sql($Row['date']) . "','" . esc_sql($Row["ua"]) . "')";
 		}
 		//insert whatever's left over
 		$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned` (`ip`,`date`,`ua`) VALUES " . implode(',', $inserts) . " ON DUPLICATE KEY UPDATE `count`=`count`+1");
@@ -825,14 +825,14 @@ function meow_check_IP(){
 
 		//if the fail count resets on success, we'll only look at failures since the last successful log-in (if any)
 		//default is 0, which is fine since all log-in attempts come after the Unix epoch.  :)
-		$meow_last_successful = $meow_fail_reset_on_success ? (int) $wpdb->get_var("SELECT MAX(`date`) FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . $wpdb->escape($ip) . "' AND `success`=1") : 0;
+		$meow_last_successful = $meow_fail_reset_on_success ? (int) $wpdb->get_var("SELECT MAX(`date`) FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . esc_sql($ip) . "' AND `success`=1") : 0;
 
 		//if the relevant failures are too great, trigger the apocalypse
-		if($meow_fail_limit <= (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . $wpdb->escape($ip) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
+		if($meow_fail_limit <= (int) $wpdb->get_var("SELECT COUNT(*) AS `count` FROM `{$wpdb->prefix}meow_log` WHERE `ip`='" . esc_sql($ip) . "' AND `success`=0 AND UNIX_TIMESTAMP()-`date` <= $meow_fail_window AND `date` > $meow_last_successful"))
 		{
 			//indicate in the logs that the apocalypse screen was shown:
-			$ua = meow_get_option('meow_store_ua') ? $wpdb->escape($_SERVER['HTTP_USER_AGENT']) : '';
-			$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned`(`ip`,`date`,`ua`) VALUES('" . $wpdb->escape($ip) . "',CURDATE(),'$ua') ON DUPLICATE KEY UPDATE `count`=`count`+1");
+			$ua = meow_get_option('meow_store_ua') ? esc_sql($_SERVER['HTTP_USER_AGENT']) : '';
+			$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned`(`ip`,`date`,`ua`) VALUES('" . esc_sql($ip) . "',CURDATE(),'$ua') ON DUPLICATE KEY UPDATE `count`=`count`+1");
 
 			//try to set the 403 status header
 			header( (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);

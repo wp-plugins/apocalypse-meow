@@ -98,6 +98,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.4.2 =
+* Replace deprecated $wpdb->escape() with esc_sql().
+
 = 1.4.1 =
 * Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0.
 
