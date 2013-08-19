@@ -44,7 +44,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.4.1');
+	define('MEOW_VERSION', '1.4.2');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
