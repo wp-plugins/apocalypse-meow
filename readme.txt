@@ -3,7 +3,7 @@ Contributors: blobfolio
 Donate link: http://www.blobfolio.com/donate.html
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
 Requires at least: 3.4
-Tested up to: 3.6
+Tested up to: 3.6.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -98,11 +98,14 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.4.3 =
+* Minor bug fix ensures variables are declared at activation;
+
 = 1.4.2 =
-* Replace deprecated $wpdb->escape() with esc_sql().
+* Replace deprecated $wpdb->escape() with esc_sql();
 
 = 1.4.1 =
-* Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0.
+* Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0;
 
 = 1.4.0 =
 * Added log-in jail page to view currently banned IPs;
@@ -159,6 +162,12 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.4.3 =
+Minor update, fixes a small bug.
+
+= 1.4.2 =
+Minor update, replace deprecated $wpdb->escape() with esc_sql().
 
 = 1.4.1 =
 Minor update, replacing a couple functions that are deprecated as of PHP 5.5.0.

@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.4.2
+Version: 1.4.3
 Author: Josh Stoik
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -40,11 +40,16 @@ License URI: http://www.gnu.org/licenses/gpl-2.0.html
 // @param n/a
 // @return true
 function meow_init_variables() {
+
+	//if this function has already been called, exit
+	if(defined('MEOW_DB'))
+		return true;
+
 	//the database version
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.4.2');
+	define('MEOW_VERSION', '1.4.3');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -673,6 +678,10 @@ function meow_SQL(){
 
 	require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 	dbDelta($sql);
+
+	//let's make sure variables have been initialized
+	if(!defined('MEOW_DB'))
+		meow_init_variables();
 
 	update_option("meow_db_version", MEOW_DB);
 
