@@ -35,7 +35,7 @@ elseif(!current_user_can('manage_options'))
 
 	<?php echo meow_get_header(); ?>
 
-	<p>Click <a href="<?php echo get_bloginfo('url'); ?>/meow/login_history.csv" title="Download history in CSV format">here</a> to download a CSV dump of this information.</p>
+	<p>Click <a href="<?php echo esc_url(site_url('meow/login_history.csv')); ?>" title="Download history in CSV format">here</a> to download a CSV dump of this information.</p>
 	<p>FYI: <?php
 	//this is a good place to let them know about the database maintenance setting
 	$meow_clean_database = meow_get_option('meow_clean_database');
@@ -44,7 +44,7 @@ elseif(!current_user_can('manage_options'))
 		echo "Records older than $meow_data_expiration days are automatically purged from the system.";
 	else
 		echo "Log-in data is currently retained forever, which is a long time.  If you find the table below getting a touch unruly, you can have the system automatically purge records after a certain amount of time.";
-?>  Visit the <a href="<?php echo admin_url('options-general.php?page=meow-settings'); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
+?>  Visit the <a href="<?php echo esc_url(admin_url('options-general.php?page=meow-settings')); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
 
 	<p>Filter records by status: <label for="view-success"><input type="checkbox" id="view-success" data-status="record-success" checked=checked /> Success</label><label for="view-failure"><input type="checkbox" id="view-failure" data-status="record-failure" checked=checked /> Failed</label></p>
 

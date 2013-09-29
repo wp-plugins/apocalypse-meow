@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.4.3
+Version: 1.4.4
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -49,7 +49,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.4.3');
+	define('MEOW_VERSION', '1.4.4');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -511,9 +511,6 @@ function meow_enqueue_css_tablesorter(){
 // @return true
 function meow_register_js_flot(){
 	wp_register_script('meow_js_flot', plugins_url('jquery.flot.min.js', __FILE__),  array('jquery'), MEOW_VERSION);
-	wp_register_script('meow_js_flot_resize', plugins_url('jquery.flot.resize.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
-	wp_register_script('meow_js_flot_navigate', plugins_url('jquery.flot.navigate.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
-	wp_register_script('meow_js_flot_pie', plugins_url('jquery.flot.pie.min.js', __FILE__),  array('jquery','meow_js_flot'), MEOW_VERSION);
 	return true;
 }
 add_action('admin_init','meow_register_js_flot');
@@ -527,9 +524,6 @@ add_action('admin_init','meow_register_js_flot');
 // @return true
 function meow_enqueue_js_flot(){
 	wp_enqueue_script('meow_js_flot');
-	wp_enqueue_script('meow_js_flot_resize');
-	wp_enqueue_script('meow_js_flot_navigate');
-	wp_enqueue_script('meow_js_flot_pie');
 	return true;
 }
 

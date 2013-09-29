@@ -255,7 +255,7 @@ if($wpdb->num_rows > 0)
 		echo "Records older than $meow_data_expiration days are automatically purged from the database.";
 	else
 		echo "Log-in data is currently retained forever, which is a long time.  If you find these stats getting a touch unruly, you can have the system automatically purge records after a certain amount of time.";
-?>  Visit the <a href="<?php echo admin_url('options-general.php?page=meow-settings'); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
+?>  Visit the <a href="<?php echo esc_url(admin_url('options-general.php?page=meow-settings')); ?>" title="Apocalypse Meow settings">settings page</a> to change this behavior.</p>
 					</div>
 				</div>
 

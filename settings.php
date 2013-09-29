@@ -91,7 +91,7 @@ if(getenv("REQUEST_METHOD") === 'POST')
 			if(false === meow_add_wpcontent_htaccess())
 				echo '<div class="error fade"><p>WordPress could not automatically create <code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>, the file containing the rules to prevent direct PHP script execution.  You\'ll have to roll up your sleeves and do it manually. Simply copy the following code into a text file named &quot;.htaccess&quot; and upload it to your wp-content/ directory:</p><p><code>' . nl2br(esc_html(MEOW_HTACCESS)) . '</code></p></div>';
 			else
-				echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . plugins_url('settings.php', __FILE__) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
+				echo '<div class="updated fade"><p>The file containing rules to prevent the direct execution of PHP scripts (<code>' . esc_html(MEOW_HTACCESS_FILE) . '</code>) has been successfully created!  Before grabbing yourself a celebratory beer:</p><ol><li>Try accessing the Apocalypse Meow settings page directly (you should get a 403 Forbidden error): <a href="' . esc_url(plugins_url('settings.php', __FILE__)) . '" target="_blank">' . plugins_url('settings.php', __FILE__) . '</a>  If instead you see &quot;Sorry&quot;, then your server is not recognizing the restriction (sorry!)</li><li>Take a thorough walkthrough of both the front- and backend of your site and make sure things still work as expected. If any plugins are caught by this trap, you\'ll need to replace them with better alternatives or live without this security lockdown.</li><li>That\'s it! Congratulations! :)</li></ol></div>';
 		}
 		//disable wp-content htaccess (only if it presently exists)
 		elseif(intval($_POST["meow_wpcontent_htaccess"]) !== 1 && meow_wpcontent_htaccess_exists())
@@ -115,7 +115,7 @@ if(getenv("REQUEST_METHOD") === 'POST')
 			else
 			{
 				$current_user = wp_get_current_user();
-				echo '<div class="updated fade"><p>Congratulations, the old &quot;admin&quot; user has been successfully changed to &quot;' . esc_html($tmp) . '&quot;.' . ($current_user->user_login === 'admin' ? ' Unfortunately you were logged in as that now nonexistent user, so you\'ll have to take a moment to <a href="' . admin_url('options-general.php?page=meow-settings') .  '">re-login</a> (as &quot;' . esc_html($tmp) . '&quot; this time).  :)' : '') . '</p></div>';
+				echo '<div class="updated fade"><p>Congratulations, the old &quot;admin&quot; user has been successfully changed to &quot;' . esc_html($tmp) . '&quot;.' . ($current_user->user_login === 'admin' ? ' Unfortunately you were logged in as that now nonexistent user, so you\'ll have to take a moment to <a href="' . esc_url(admin_url('options-general.php?page=meow-settings')) .  '">re-login</a> (as &quot;' . esc_html($tmp) . '&quot; this time).  :)' : '') . '</p></div>';
 				$wpdb->update($wpdb->users, array('user_login'=>$tmp), array('user_login'=>'admin'), array('%s'), array('%s'));
 				if($current_user->user_login === 'admin')
 					die();
@@ -152,7 +152,7 @@ else
 
 	<div class="metabox-holder has-right-sidebar">
 
-		<form id="form-meow-settings" method="post" action="<?php echo admin_url('options-general.php?page=meow-settings'); ?>">
+		<form id="form-meow-settings" method="post" action="<?php echo esc_url(admin_url('options-general.php?page=meow-settings')); ?>">
 		<?php wp_nonce_field('meow-settings'); ?>
 
 		<div class="inner-sidebar">
@@ -222,6 +222,18 @@ else
 			</div>
 			<!--end disable editor-->
 
+			<!-- About Us -->
+			<div class="postbox">
+				<div class="inside">
+					<a href="http://www.blobfolio.com/donate.html" title="Blobfolio, LLC" target="_blank"><img src="<?php echo esc_url(plugins_url('blobfolio.png', __FILE__)); ?>" class="logo" alt="Blobfolio logo"></a>
+
+					<p>We hope you find this plugin useful.  If you do, you might be interested in our other plugins, which are also completely free (and useful).</p>
+					<ul>
+						<li><a href="http://wordpress.org/plugins/look-see-security-scanner/" target="_blank" title="Look-See Security Scanner">Look-See Security Scanner</a>: verify the integrity of a WP installation by scanning for unexpected or modified files.</li>
+						<li><a href="http://wordpress.org/plugins/sockem-spambots/" target="_blank" title="Sock'Em SPAMbots">Sock'Em SPAMbots</a>: a more seamless approach to deflecting the vast majority of SPAM comments.</li>
+					</ul>
+				</div>
+			</div><!--.postbox-->
 
 		</div>
 		<!--end sidebar-->
