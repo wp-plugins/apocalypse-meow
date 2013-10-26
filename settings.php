@@ -169,6 +169,13 @@ else
 			</div>
 			<!--end generator meta tag-->
 
+			<?php
+			//rather than confuse people on different types of servers,
+			//let's restrict this to apache.  sure, some servers might
+			//not admit they are apache, but obscurity has its cost!
+			if(preg_match('/apache/i', $_SERVER['SERVER_SOFTWARE']))
+			{
+			?>
 			<!--start wp-content .htaccess-->
 			<div class="postbox">
 				<h3 class="hndle">Prevent direct script execution</h3>
@@ -178,11 +185,13 @@ else
 						<input type="checkbox" name="meow_wpcontent_htaccess" id="meow_wpcontent_htaccess" value="1" <?php echo (meow_wpcontent_htaccess_exists() ? 'checked=checked' : ''); ?> />
 						Check this box to disable the direct execution of PHP scripts stored inside wp-content/.
 					</label></p>
-					<p class="description">Note: This will only work if your server environment supports location-specific allow/deny rules in .htaccess.</p>
-					<p class="description">Note #2: This might break things!  Some (lazy) plugins and themes foresake WP's engine and execute their scripts directly (and thus won't work if this option is enabled). If things break so badly you cannot even access this page to disable the option, simply delete <code><?php echo esc_html(MEOW_HTACCESS_FILE); ?></code> via FTP.</p>
+					<p class="description">Note: This might break things!  Some (lazy) plugins and themes foresake WP's engine and execute their scripts directly (and thus won't work if this option is enabled). If things break so badly you cannot even access this page to disable the option, simply delete <code><?php echo esc_html(MEOW_HTACCESS_FILE); ?></code> via FTP.</p>
 				</div>
 			</div>
 			<!--end wp-content .htaccess-->
+			<?php
+			}//end if apache
+			?>
 
 			<?php
 			//only show this section if relevant
@@ -244,8 +253,22 @@ else
 				<!--start log-in protection-->
 				<div class="postbox">
 					<h3 class="hndle">Log-in Protection</h3>
+
+					<!--if we can log logins, show login logging options!-->
 					<div class="inside">
-						<p>Sometimes bad people use robots to cycle through zillions of possible log-in combinations.  If they magically guess a valid combination, your blog will magically become a Canadian pharmacy or Russian dating site, which is generally not desirable.  Luckily, we can mitigate the effectiveness of such an attack by limiting the number of failed log-in attempts allowed per person within a given time frame.  To keep things cheerful, we'll temporarily replace the log-in form with a kitty picture for people who exceed the specified limit.  We'll give 'em Apocalypse Meow!</p>
+						<p>Sometimes bad people use robots to cycle through zillions of possible log-in combinations.  If they magically guess a valid combination, your blog will magically become a Canadian pharmacy or Russian dating site, which is generally not desirable.  Luckily, we can mitigate the effectiveness of such an attack by limiting the number of failed log-in attempts allowed per person within a given time frame.</p>
+
+						<?php
+						//reverse proxies and intranets can strip visitor IP information before talking to PHP,
+						//which is bad as the plugin can no longer tell who's who. rather than silently fail,
+						//let's give the administrator a heads up!
+						if(false === meow_get_IP())
+						{
+						?>
+							<div class="error fade"><p>Warning: your server or WordPress configuration seems to be masking your IP address (<code><?php echo $_SERVER['REMOTE_ADDR']; ?></code>).  The log-in protection functions require access to the public IP address of each visitor.  If the IP exposed to PHP falls within private or reserved ranges, or if it matches the server's IP, no action can be taken.</p></div>
+						<?php
+						}//end IP error
+						?>
 
 						<table class="form-table">
 							<tbody>
@@ -304,7 +327,7 @@ else
 								</tr>
 							</tbody>
 						</table>
-					</div>
+					</div><!--.inside-->
 				</div>
 				<!--end log-in protection-->
 
@@ -418,6 +441,21 @@ jQuery("#meow-purge-data").click(function(e){
 	}
 	else
 		return false;
+});
+
+//let's warn people that they might get a blank white screen
+//after PHP deletes the .htaccess file.
+var htaccess_warned=<?php echo meow_wpcontent_htaccess_exists() ? 0 : 1 ?>;
+jQuery('#meow_wpcontent_htaccess').click(function(){
+	//only warn once
+	if(htaccess_warned === 1)
+		return;
+
+	//a simple alert will do
+	alert("Just a heads up: it is normal to receive a blank page immediately after disabling this option. It is a one-time thing, nothing to worry about.");
+
+	//and don't bother them again
+	htaccess_warned = 1;
 });
 
 </script>

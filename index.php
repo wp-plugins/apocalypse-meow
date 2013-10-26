@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.4.4
+Version: 1.4.5
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -123,7 +123,7 @@ function meow_get_option($option){
 			return (bool) get_option('meow_store_ua', false);
 		//whether or not to remove old log-in entries from the database
 		case 'meow_clean_database':
-			return (bool) get_option('meow_clean_database', false);
+			return (bool) get_option('meow_clean_database', true);
 		//how long to keep old log-in entries in the database
 		case 'meow_data_expiration':
 			$tmp = (int) get_option('meow_data_expiration', 90);
@@ -837,11 +837,8 @@ function meow_check_IP(){
 			$ua = meow_get_option('meow_store_ua') ? esc_sql($_SERVER['HTTP_USER_AGENT']) : '';
 			$wpdb->query("INSERT INTO `{$wpdb->prefix}meow_log_banned`(`ip`,`date`,`ua`) VALUES('" . esc_sql($ip) . "',CURDATE(),'$ua') ON DUPLICATE KEY UPDATE `count`=`count`+1");
 
-			//try to set the 403 status header
-			header( (isset($_SERVER['SERVER_PROTOCOL']) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0') . ' 403 Forbidden',true,403);
-			//print the page
-			echo '<html><head><title>' . esc_attr(meow_get_option('meow_apocalypse_title')) . '</title></head><body>' . nl2br(meow_get_option('meow_apocalypse_content')) . '</body></html>';
-			exit;
+			//this is where we get off
+			wp_die(nl2br(meow_get_option('meow_apocalypse_content')), meow_get_option('meow_apocalypse_title'), array('response'=>403));
 		}
 	}
 

@@ -98,6 +98,12 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.4.5 =
+* Warn administrators on settings page of potential proxy/intranet-type issues;
+* Only show .htaccess options on Apache servers;
+* Use wp_die() for Apocalypse screen;
+* Database maintenance on by default;
+
 = 1.4.4 =
 * Minor update, file clean up.
 
@@ -165,6 +171,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.4.5 =
+Various UX improvements, mostly in the form of clearer warnings and explanations.
 
 = 1.4.4 =
 Minor update, file clean up.
