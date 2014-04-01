@@ -3,13 +3,13 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.4.5
+Version: 1.5.0
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-	Copyright © 2013  Blobfolio, LLC  (email: hello@blobfolio.com)
+	Copyright © 2014  Blobfolio, LLC  (email: hello@blobfolio.com)
 
 	This program is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.4.4');
+	define('MEOW_VERSION', '1.5.0');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -124,6 +124,14 @@ function meow_get_option($option){
 		//whether or not to remove old log-in entries from the database
 		case 'meow_clean_database':
 			return (bool) get_option('meow_clean_database', true);
+		//weather to use a custom client ip header
+		case 'meow_ip_key':
+			$tmp = get_option('meow_ip_key', 'REMOTE_ADDR');
+			//make sure this is a valid index before returning it
+			if(array_key_exists($tmp, $_SERVER) && filter_var($_SERVER[$tmp], FILTER_VALIDATE_IP))
+				return $tmp;
+			else
+				return 'REMOTE_ADDR';
 		//how long to keep old log-in entries in the database
 		case 'meow_data_expiration':
 			$tmp = (int) get_option('meow_data_expiration', 90);
@@ -741,17 +749,19 @@ function meow_migrate_banned(){
 //--------------------------------------------------
 //Get and/or validate an IP address
 //
-// if no IP is passed, REMOTE_ADDR is used.  IP is returned so long as
+// if no IP is passed, the client ip header is used.  IP is returned so long as
 // it is a valid address (and not private/reserved), otherwise false
 //
 // @since 1.0.0
 //
-// @param $ip (optional) an IP address to validate; otherwise REMOTE_ADDR
+// @param $ip (optional) an IP address to validate; otherwise the client ip header
 // @return string IP or false
+
 function meow_get_IP($ip=null){
-	//if not supplied, let's use REMOTE_ADDR
+
+	//if not supplied, let's use the client ip header
 	if(is_null($ip))
-		$ip = $_SERVER['REMOTE_ADDR'];
+		$ip = $_SERVER[meow_get_option('meow_ip_key')];
 
 	//return the ip, unless it is invalid
 	return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) ? $ip : false;
