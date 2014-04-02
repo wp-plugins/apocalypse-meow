@@ -109,7 +109,7 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Database maintenance on by default;
 
 = 1.4.4 =
-* Minor update, file clean up.
+* Minor update, file clean up;
 
 = 1.4.3 =
 * Minor bug fix ensures variables are declared at activation;
