@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.5.0
+Version: 1.6.0
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -49,7 +49,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.5.0');
+	define('MEOW_VERSION', '1.6.0');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -327,6 +327,33 @@ function meow_jail(){
 }
 
 //--------------------------------------------------
+//Create a Users->Reset Passwords menu item
+//
+// @since 1.6.0
+//
+// @param n/a
+// @return true
+function meow_password_menu(){
+	$page = add_submenu_page('tools.php', 'Reset User Passwords', 'Reset User Passwords', 'manage_options', 'meow-password', 'meow_password');
+	return true;
+}
+add_action('admin_menu', 'meow_password_menu');
+
+//--------------------------------------------------
+//The Users->Reset Passwords page
+//
+// this is an external file (password.php)
+//
+// @since 1.6.0
+//
+// @param n/a
+// @return true
+function meow_password(){
+	require_once(dirname(__FILE__) . '/password.php');
+	return true;
+}
+
+//--------------------------------------------------
 //Set up some fancy URLs
 //
 // add a rewrite rule for the log-in history CSV export file.
@@ -543,7 +570,7 @@ function meow_enqueue_js_flot(){
 // @param n/a
 // @return html
 function meow_get_header(){
-	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Log-in History'=>'users.php?page=meow-history', 'Log-in Jail'=>'users.php?page=meow-jail', 'Statistics'=>'users.php?page=meow-statistics');
+	$pages = array('Settings'=>'options-general.php?page=meow-settings', 'Reset Passwords'=>'tools.php?page=meow-password', 'Log-in History'=>'users.php?page=meow-history', 'Log-in Jail'=>'users.php?page=meow-jail', 'Statistics'=>'users.php?page=meow-statistics');
 
 	$xout = '<img src="' . esc_url(MEOW_IMAGE) . '" alt="kitten" style="width: 42px; float:left; margin-right: 10px; height: 42px; border: 0;" />
 	<h2>Apocalypse Meow</h2>
@@ -581,6 +608,89 @@ function meow_purge_data(){
 	die();
 }
 add_action('wp_ajax_meow_purge_data', 'meow_purge_data');
+
+//--------------------------------------------------
+//Reset user passwords en masse
+//
+// @since 1.6.0
+//
+// @param n/a
+// @return n/a
+function meow_reset_passwords(){
+
+	//send the status back to the server
+	$xout = array('success'=>0, 'page'=>0, 'completed'=>0, 'total'=>0);
+
+	//how many are we resetting per batch?
+	$limit = 20;
+
+	//the current page
+	$page = (int) $_POST['page'];
+	if($page < 0)
+		$page = 0;
+
+	//the maximum user id at the time this began
+	$max = (int) $_POST['max'];
+
+	$message = esc_html(trim($_POST['message']));
+
+	//message subject (not user specific)
+	$msubject = '[' . get_bloginfo('name') . '] Password Reset';
+
+	//verify ajax nonce
+	if(check_ajax_referer( 'm30wp@$$w0rd', 'nonce', false) && current_user_can('manage_options'))
+	{
+		global $wpdb;
+		global $current_user;
+
+		//just in case $current_user isn't set for some reason
+		get_currentuserinfo();
+
+		//pull user info in a batch, save current user for last
+		$dbResult = $wpdb->get_results("SELECT `ID`, `user_login`, `user_email` FROM `{$wpdb->prefix}users`  WHERE `ID` <= $max ORDER BY (`ID`={$current_user->ID}) ASC, `ID` ASC LIMIT " . ($page * $limit) . ", $limit", ARRAY_A);
+		if(is_array($dbResult) && count($dbResult))
+		{
+			//cycle through each user
+			$updates = array();
+			foreach($dbResult AS $Row)
+			{
+				//make a nice password!
+				$password = wp_generate_password(35, true, false);
+
+				//message body
+				$mbody = (strlen($message) ? "$message\n\n" : '') . "Username: {$Row['user_login']}\nPassword: $password\n" . site_url('wp-login.php');
+
+				//e-mail user
+				wp_mail($Row['user_email'], $msubject, $mbody);
+
+				//we'll update the database in one swoop later, so store the hash for now
+				$updates[intval($Row['ID'])] = wp_hash_password($password);
+			}
+
+			//as promised, we need to update the database. it is a lot faster to do one bulk query than lots of separate ones.
+			$query = "UPDATE `{$wpdb->prefix}users` SET `user_pass` = CASE `ID`";
+			foreach($updates AS $k=>$v)
+				$query .= "\nWHEN $k THEN '" . esc_sql($v) . "'";
+			$query .= "\nEND WHERE `ID` IN (" . implode(',', array_keys($updates)) . ")";
+
+			$wpdb->query($query);
+		}
+
+		//update status
+		$xout['success'] = 1;
+		$xout['page'] = ($page + 1);
+		$xout['completed'] = $xout['page'] * $limit;
+		$xout['total'] = (int) $wpdb->get_var("SELECT COUNT(*) FROM `{$wpdb->prefix}users` WHERE `ID` <= $max");
+
+		//don't report > 100% just because we took a shortcut
+		if($xout['total'] < $xout['completed'])
+			$xout['completed'] = $xout['total'];
+	}
+
+	echo json_encode($xout);
+	die();
+}
+add_action('wp_ajax_meow_reset_passwords', 'meow_reset_passwords');
 
 //--------------------------------------------------
 //Pardon a banned IP

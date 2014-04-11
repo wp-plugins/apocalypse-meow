@@ -378,7 +378,7 @@ else
 					<h3 class="hndle">Password Requirements</h3>
 					<div class="inside">
 						<p>Most people use horribly insecure passwords.  Tweak the following settings to enforce halfway decent choices from your users.<br />
-						<span class="description">Note: These requirments are only applied to new (or updated) passwords; they have no effect on current passwords.</span></p>
+						<span class="description">Note: These requirments are only applied to new (or updated) passwords; they have no effect on current passwords. You can always reset all user passwords <a href="<?php echo esc_url(admin_url('tools.php?page=meow-password')); ?>" title="Reset Passwords">here</a> if needed.</span></p>
 
 						<table class="form-table">
 							<tbody>

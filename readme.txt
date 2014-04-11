@@ -3,7 +3,7 @@ Contributors: blobfolio, jjfalling
 Donate link: http://www.blobfolio.com/donate.html
 Tags: security, login, password, cats, generator, wp-content, PHP, malware, exploit
 Requires at least: 3.4
-Tested up to: 3.8.2
+Tested up to: 3.8.1
 Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -21,6 +21,7 @@ Apocalypse Meow provides several tools to help you lock down the wp-admin area:
   * Prevent the direct execution of PHP scripts in `wp-content/`.
   * Rename the default "admin" user.
   * Disable the theme/plugin editor.
+  * Reset all user passwords.
 
 == Installation ==
 
@@ -98,6 +99,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.6.0 =
+* In honor of Heartbleed, there is now a tool for resetting all user passwords en masse;
+
 = 1.5.0 =
 * Allow alternate $_SERVER variables for proxy installations (thanks `jjfalling`);
 * Minor code clean up;
@@ -109,7 +113,7 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Database maintenance on by default;
 
 = 1.4.4 =
-* Minor update, file clean up;
+* Minor update, file clean up.
 
 = 1.4.3 =
 * Minor bug fix ensures variables are declared at activation;
@@ -175,6 +179,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.6.0 =
+Includes a tool for resetting all user passwords. Sites which were vulnerable to Heartbleed are encouraged to take advantage of this.
 
 = 1.5.0 =
 Improvements for proxy installations.
