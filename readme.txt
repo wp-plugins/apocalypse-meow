@@ -99,6 +99,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 1.7.0 =
+* Added ability to clear unclaimed pardons;
+
 = 1.6.0 =
 * In honor of Heartbleed, there is now a tool for resetting all user passwords en masse;
 
@@ -179,6 +182,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 1.7.0 =
+Added ability to clear unclaimed pardons.
 
 = 1.6.0 =
 Includes a tool for resetting all user passwords. Sites which were vulnerable to Heartbleed are encouraged to take advantage of this.

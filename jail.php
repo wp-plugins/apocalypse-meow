@@ -27,9 +27,31 @@ elseif(!meow_get_option('meow_protect_login'))
 
 
 //--------------------------------------------------
+//Posting?
+if(getenv('REQUEST_METHOD') === 'POST')
+{
+	//clear pardons?
+	if($_POST['action'] === 'clear-pardons')
+	{
+		//bad nonce
+		if(!wp_verify_nonce($_POST['n'], 'meow-pardon'))
+			echo '<div class="error fade"><p>The form had expired, please try again.</p></div>';
+		//clear the pardons
+		else
+		{
+			update_option('meow_ip_pardoned', array());
+			echo '<div class="updated"><p>The pardons have been cleared.</p></div>';
+		}
+	}//end clear pardons
+}//end post
+
+
+
+//--------------------------------------------------
 //Build data
 
 global $wpdb;
+
 
 //first let's figure out who we're supposed to ignore
 $meow_ip_pardoned = meow_get_option('meow_ip_pardoned');
@@ -95,7 +117,16 @@ if($meow_fail_reset_on_success && count($meow_banned))
 				<div class="inside">
 <?php
 if(count($meow_ip_pardoned))
-	echo '<p>' . implode('<br>', $meow_ip_pardoned) . '</p>';
+{
+	?>
+					<p><?=implode('<br>', $meow_ip_pardoned)?></p>
+					<form method="post" action="<?=admin_url('users.php?page=meow-jail')?>">
+						<input type="hidden" name="action" value="clear-pardons" />
+						<input type="hidden" name="n" value="<?=wp_create_nonce('meow-pardon')?>" />
+						<input type="submit" class="button button-small" value="Clear Pardons" />
+					</form>
+	<?php
+}
 else
 	echo '<p>There are no unclaimed pardons.</p>';
 ?>
