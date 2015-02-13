@@ -99,6 +99,12 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 2.0.0 =
+* Forgot password reset enforces password strength rules;
+* Don't allow Top 25 Most Common passwords ever;
+* Move db cleanup to WP Cron;
+* Misc code cleanup;
+
 = 1.7.0 =
 * Added ability to clear unclaimed pardons;
 
@@ -182,6 +188,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 2.0.0 =
+Fixed a forgot password reset bug, added test for common passwords, and conducted some code clean up.
 
 = 1.7.0 =
 Added ability to clear unclaimed pardons.

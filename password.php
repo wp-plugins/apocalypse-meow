@@ -111,13 +111,10 @@ jQuery('.meow-password-form').submit(function(){
 // Reset passwords
 
 function meow_password_reset(){
-	jQuery.post(ajaxurl, jQuery('.meow-password-form').serialize(), function(response){
+	jQuery.post(ajaxurl, jQuery('.meow-password-form').serialize(), function(r){
 
-		try {
-			r = jQuery.parseJSON(response);
-		}
-		catch(e){
-			jQuery('.meow-password-info-wrapper').append('<p>Curious. The server did not return a valid response: <code>' + response + '</code></p>');
+		if(!meow_is_json(r)){
+			jQuery('.meow-password-info-wrapper').append('<p>Curious. The server did not return a valid response.</p>');
 			return;
 		}
 
@@ -140,6 +137,18 @@ function meow_password_reset(){
 		}
 
 	});
+}
+
+//-------------------------------------------------
+// Validate JSON object
+
+function meow_is_json(value) {
+	try {
+		JSON.stringify(value);
+		return true;
+	} catch (ex) {
+		return false;
+	}
 }
 
 </script>

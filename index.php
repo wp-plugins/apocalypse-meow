@@ -3,13 +3,13 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 1.7.0
+Version: 2.0.0
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-	Copyright © 2014  Blobfolio, LLC  (email: hello@blobfolio.com)
+	Copyright © 2015  Blobfolio, LLC  (email: hello@blobfolio.com)
 
 	This program is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ function meow_init_variables() {
 	define('MEOW_DB', '1.3.5');
 
 	//the program version
-	define('MEOW_VERSION', '1.7.0');
+	define('MEOW_VERSION', '2.0.0');
 
 	//the kitten image
 	define('MEOW_IMAGE', plugins_url('kitten.gif', __FILE__));
@@ -687,8 +687,7 @@ function meow_reset_passwords(){
 			$xout['completed'] = $xout['total'];
 	}
 
-	echo json_encode($xout);
-	die();
+	wp_send_json($xout);
 }
 add_action('wp_ajax_meow_reset_passwords', 'meow_reset_passwords');
 
@@ -1028,7 +1027,7 @@ add_action('wp_login', 'meow_login_success');
 //--------------------------------------------------
 //Database maintenance
 //
-// purge old log-in logs after a successful log-in.
+// purge old log-in logs
 //
 // @since 1.0.0
 //
@@ -1051,7 +1050,9 @@ function meow_clean_database(){
 
 	return true;
 }
-add_action('wp_login','meow_clean_database');
+add_action('meow_clean_database', 'meow_clean_database');
+if(!wp_next_scheduled( 'meow_clean_database'))
+	wp_schedule_event(time(), 'daily', 'meow_clean_database');
 
 //----------------------------------------------------------------------  end log-in protection
 
@@ -1062,6 +1063,45 @@ add_action('wp_login','meow_clean_database');
 //----------------------------------------------------------------------
 //functions to ensure user passwords meet certain minimum safety
 //standards
+
+//--------------------------------------------------
+//Worst 25 passwords
+//
+// this is mandatory :)
+//
+// @since 2.0.0
+//
+// @param pass
+// @return true/false
+function meow_is_common_password($pass){
+	//source: SplashData
+	$common = array('123456',
+					'password',
+					'12345',
+					'12345678',
+					'qwerty',
+					'123456789',
+					'1234',
+					'baseball',
+					'dragon',
+					'football',
+					'1234567',
+					'monkey',
+					'letmein',
+					'abc123',
+					'111111',
+					'mustang',
+					'access',
+					'shadow',
+					'master',
+					'michael',
+					'superman',
+					'696969',
+					'123123',
+					'batman',
+					'trustno1');
+	return in_array($pass, $common);
+}
 
 //--------------------------------------------------
 //A wrapper function for meow_password_rules()
@@ -1094,6 +1134,13 @@ function meow_password_rules(&$pass1, &$pass2)
 	//WP can handle password mismatch or empty password errors
 	if($pass1 !== $pass2 || !strlen($pass1))
 		return false;
+
+	//can't be top 25
+	if(meow_is_common_password($pass1))
+	{
+		$meow_password_error = __("&quot;$pass1&quot; is actually one of the Top 25 most commonly used passwords; please try something else!");
+		return false;
+	}
 
 	//needs a letter
 	if(meow_get_option('meow_password_alpha') === 'required' && !preg_match('/[a-z]/i', $pass1))
@@ -1152,6 +1199,60 @@ function meow_password_rules_error($errors)
 }
 add_action('user_profile_update_errors','meow_password_rules_error', 10, 1);
 add_action('password_rules_error','meow_password_rules_error', 10, 1);
+
+//-------------------------------------------------
+//Validate reset password choice
+//
+// Wordpress uses a different hook for password
+// resets (from the forgot password form) than
+// changes made in the profile.  Not sure why!
+//
+// @since 2.0.0
+//
+// @param $errors
+// @param $user
+// @return true
+function meow_validate_reset_password(){
+
+	//this action is called even if we're not posting, which is silly
+	//this is the test wp-login.php uses, so I'll use it too
+	if(!isset($_POST['pass1']))
+		return;
+
+	global $errors;
+
+	//WP can handle password mismatch or empty password errors
+	if($_POST['pass1'] !== $_POST['pass2'] || !strlen($_POST['pass1']))
+		return;
+
+	//can't be top 25
+	if(meow_is_common_password($_POST['pass1']))
+		$errors->add('pass', "&quot;{$_POST['pass1']}&quot; is actually one of the Top 25 most commonly used passwords; please try something else!");
+
+	//needs a letter
+	if(meow_get_option('meow_password_alpha') === 'required' && !preg_match('/[a-z]/i', $_POST['pass1']))
+		$errors->add('pass', 'The password must contain at least one letter.');
+
+	//needs both upper- and lowercase letters
+	elseif(meow_get_option('meow_password_alpha') === 'required-both' && (!preg_match('/[a-z]/', $_POST['pass1']) || !preg_match('/[A-Z]/', $_POST['pass1'])))
+		$errors->add('pass', 'The password must contain at least one uppercase and one lowercase letter.');
+
+	//needs a number
+	if(meow_get_option('meow_password_numeric') === 'required' && !preg_match('/\d/', $_POST['pass1']))
+		$errors->add('pass', 'The password must contain at least one number.');
+
+	//needs a symbol
+	if(meow_get_option('meow_password_symbol') === 'required' && !preg_match('/[^a-z0-9]/i', $_POST['pass1']))
+		$errors->add('pass', 'The password must contain at least one non-alphanumeric symbol.');
+
+	//check password length
+	$meow_password_length = meow_get_option('meow_password_length');
+	if(strlen($_POST['pass1']) < $meow_password_length)
+		$errors->add('pass', "The password must be at least $meow_password_length characters long.");
+
+	return;
+}
+add_action('validate_password_reset', 'meow_validate_reset_password');
 
 //----------------------------------------------------------------------  end password restrictions
 
