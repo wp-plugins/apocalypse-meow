@@ -99,6 +99,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 
 == Changelog ==
 
+= 2.0.1 =
+* Minor update, more robust username retrieval;
+
 = 2.0.0 =
 * Forgot password reset enforces password strength rules;
 * Don't allow Top 25 Most Common passwords ever;
@@ -188,6 +191,9 @@ Some robots are so dumb they'll continue trying to submit credentials even after
 * Apocalypse Meow is born!
 
 == Upgrade Notice ==
+
+= 2.0.1 =
+Minor update, more robust username retrieval.
 
 = 2.0.0 =
 Fixed a forgot password reset bug, added test for common passwords, and conducted some code clean up.

@@ -3,7 +3,7 @@
 Plugin Name: Apocalypse Meow
 Plugin URI: http://wordpress.org/extend/plugins/apocalypse-meow/
 Description: A simple, light-weight collection of tools to help protect wp-admin, including password strength requirements and brute-force log-in prevention.
-Version: 2.0.0
+Version: 2.0.1
 Author: Blobfolio, LLC
 Author URI: http://www.blobfolio.com/
 License: GPLv2 or later
@@ -1007,8 +1007,8 @@ function meow_login_log($status=0, $username=''){
 //
 // @param n/a
 // @return true
-function meow_login_error(){
-	return meow_login_log(0, trim(strtolower(stripslashes_deep($_REQUEST["log"]))));
+function meow_login_error($username){
+	return meow_login_log(0, trim(strtolower($username)));
 }
 add_action('wp_login_failed','meow_login_error');
 
@@ -1019,10 +1019,10 @@ add_action('wp_login_failed','meow_login_error');
 //
 // @param n/a
 // @return true
-function meow_login_success(){
-	return meow_login_log(1, trim(strtolower(stripslashes_deep($_REQUEST["log"]))));
+function meow_login_success($user_login, $user){
+	return meow_login_log(1, trim(strtolower($user_login)));
 }
-add_action('wp_login', 'meow_login_success');
+add_action('wp_login', 'meow_login_success', 10, 2);
 
 //--------------------------------------------------
 //Database maintenance
